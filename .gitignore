@@ -1,0 +1,61 @@
+# --- Sekrety / env ---
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+credentials.json
+token.json
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+venv/
+.venv/
+env/
+ENV/
+
+# --- LangGraph / LangChain ---
+.langgraph_api/
+.langgraph/
+*.langgraph.log
+
+# --- Narzędzia dev ---
+.ropeproject/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+*.log
+
+# --- Nagrania / modele (voice assistant) ---
+*.wav
+*.mp3
+*.m4a
+*.flac
+recordings/
+audio_cache/
+*.gguf
+*.bin
+models/
+
+# --- macOS ---
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# --- Edytory ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# --- Jupyter (jakby się pojawiły notebooki) ---
+.ipynb_checkpoints/
