@@ -7,7 +7,19 @@ from langchain.messages import HumanMessage
 from langchain.agents.middleware import SummarizationMiddleware
 from tools import get_geo_data, get_weather, search_web
 
-checkpointer = InMemorySaver()
+from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+
+
+#potrzeba dodac allowed msgpack poniewaz langgraph ostrzega przed nieznanymi typami gdy agent chce wyciagnac cos z pamieci. 
+checkpointer = InMemorySaver(
+    serde=JsonPlusSerializer(
+        allowed_msgpack_modules=[
+            ("prompts", "RouterOutput"),   # (nazwa modułu, nazwa klasy)
+        ]
+    )
+)
+
 
 from prompts import router_prompt, RouterOutput, conversational_prompt
 

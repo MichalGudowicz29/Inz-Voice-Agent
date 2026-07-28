@@ -11,10 +11,16 @@
 2. Dodalem glowna petle w 'main.py', ktora opiera sie na przyjmowaniu wiadomosci z funkcji light_listen(), ktora dziala w tle w zapetleniu, dodalem do niej rowniez mechanizm sprawdzania czy tekst rozni sie od poprzedniego poniewaz bez tego caly czas robil invoke na tej samej wiadomosci. 
 3. Przenioslem prompty do pliku prompts.py, agentow do pliku agents.py, a narzedzia do pliku tools.py 
 4. Dodalem router, ktory zwraca wedlug response format. need_plan: bool, oraz resoning, dzieki czemu wiemy czy czy trzeba rozpoczac planowanie czy wystarczy odpowiedziec uzytkownikowi, zastanawiam sie czy agent konwersacyjny w ogole jest potrzebny co jezeli router jest w stanie odpowiedziec na pytanie. 
-- [ ] Dodac agenta konwersacyjnego i planner i zobaczyc ile czasu to wszystko zajmuje i ile tokenow 
+- [x] Dodac agenta konwersacyjnego i planner i zobaczyc ile czasu to wszystko zajmuje i ile tokenow 
+5. Agent konwersacyjny jest dodany wraz z promptem, 
+6. Dodalem prompt TTS_PROMPT, ktory co do zalozenia ma wymuszac na modelach formatowanie odpowiedzi w sposob latwy do przeczytania dal modelu tts. 
+7. poprawka w prompcie routera, poniewaz gdy pytam go co mam zrobic nawet w emocjonalnych sprawach nie chce odpowiadac konkretnie tylko mysli ze odpowiedz wymaga planowania
+8. Poprawa Checkpointera aby mogl wywolywac customowe moduly z pamieci takie jak RouterOuput
+9. Router dziala, przetestowany, na casualowej rozmowie, gdy poprosilem o wykonanie wyszukania w internecie proba wywolania planner
+- [ ] Dodac agenta plannera 
+- [ ] Dodac TTS na koncowej odpowiedzi
+
 
 
 29.07.2026
-- [ ] Dodac agenta konwersacyjnego i zobaczyc ile router dodaje opoznienia do architektury
-- [ ] Dodaca agenta plannera i zobaczyc jak to dziala
 

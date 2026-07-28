@@ -7,11 +7,9 @@
 - [x] listen() - funkcja odpowiedzialna za sluchanie uzytkownika
 - [x] light_listen() - funkcja opierajaca sie na duzo mniejszym modelu ASR 
 - [ ] speak() - funkcja odpowiedzialna za zamiane tekstu na dzwiek 
-- [ ] 
 
 ## Glowna petla
 - [x] Glowna petla wywolujaca router 
-- [ ] 
 
 
 ## Agenci

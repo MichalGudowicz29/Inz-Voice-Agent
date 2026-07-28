@@ -30,7 +30,7 @@ for message in listener:
     # rt stands for response time
     rt0 = time.time() 
     response = router_agent.invoke(
-        {"messages": HumanMessage(content=message)},
+        {"messages": [HumanMessage(content=message)]},
         config=config
     )
     rt1 = time.time()
@@ -45,7 +45,7 @@ for message in listener:
         #call conversational
         ct0 = time.time()
         answer = conversational_agent.invoke(
-            {"messages": HumanMessage(content=message)},
+            {"messages": [HumanMessage(content=message)]},
             config=config
         )
         ct1 = time.time()
