@@ -1,61 +1,99 @@
-# --- Sekrety / env ---
+# Secrets and local configuration
 .env
 .env.*
 !.env.example
 *.key
 *.pem
+*.crt
+*.p12
 credentials.json
 token.json
 
-# --- Python ---
+# Python bytecode and caches
 __pycache__/
 *.py[cod]
 *$py.class
-*.so
-.Python
-build/
-dist/
-*.egg-info/
-.eggs/
-venv/
+.python-version
+.cache/
+
+# Virtual environments
 .venv/
+venv/
 env/
 ENV/
 
-# --- LangGraph / LangChain ---
+# Build and packaging output
+build/
+dist/
+site/
+*.egg-info/
+.eggs/
+*.egg
+pip-wheel-metadata/
+
+# Test, coverage, and type-checker state
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.tox/
+.nox/
+
+# LangGraph / LangChain local runtime state
 .langgraph_api/
 .langgraph/
 *.langgraph.log
+langgraph.json.tmp
 
-# --- Narzędzia dev ---
-.ropeproject/
-.mypy_cache/
-.pytest_cache/
-.ruff_cache/
+# Local databases and generated state
+*.db
+*.sqlite
+*.sqlite3
+*.pckl
+*.pickle
+
+# Logs and runtime artifacts
 *.log
+logs/
+tmp/
+temp/
 
-# --- Nagrania / modele (voice assistant) ---
+# Audio recordings and generated media
 *.wav
 *.mp3
 *.m4a
 *.flac
+*.ogg
 recordings/
 audio_cache/
+
+# Local ML models and downloaded weights
+models/
 *.gguf
 *.bin
-models/
+*.safetensors
+*.onnx
+*.pt
+*.pth
 
-# --- macOS ---
-.DS_Store
-.AppleDouble
-.LSOverride
-
-# --- Edytory ---
+# Developer tools and editors
+.ropeproject/
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# --- Jupyter (jakby się pojawiły notebooki) ---
+# Jupyter
 .ipynb_checkpoints/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*

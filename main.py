@@ -1,46 +1,65 @@
-from langchain.agents import create_agent
+#env imports
 from dotenv import load_dotenv
 load_dotenv()
 
+#langchain graph 
 from langgraph.checkpoint.memory import InMemorySaver
 from langchain.messages import HumanMessage
 from langchain.agents.middleware import SummarizationMiddleware
+
+#additional
+import time
+
+# local imports
 from tools import get_geo_data, get_weather, search_web
-from voice import init_transcribe_model, listen, speak
-checkpointer = InMemorySaver()
+from voice import light_listen, speak
+from agents import router_agent, conversational_agent
 
 
-agent = create_agent(
-    model="gpt-5-nano",
-    tools=[get_weather, get_geo_data, search_web],
-    system_prompt="You are a helpful assistant, very bad at guessing but you have a lot of tools you can use that will provide you real time information, so instead of guessing you should always check if there is possible tool to use to acomplishe task, then call it and us it.",
-    checkpointer=checkpointer,
-    middleware=[
-        SummarizationMiddleware(
-            model='gpt-5-nano',
-            trigger=('messages', 20), 
-            keep=('messages', 5)
-        )
-    ]
-)
 config = {'configurable': {'thread_id':'1'}}
+listener=light_listen()
 
+for message in listener:
 
+    if not message:
+        continue
 
-while True:
-    message = str(input("Ty: "))
-
-    # Run the agent
-    response = agent.invoke(
-        {"messages": message},
+    print("=" * 10)
+    print(f"Ty: {message}") 
+    print("=" * 10)
+    # rt stands for response time
+    rt0 = time.time() 
+    response = router_agent.invoke(
+        {"messages": HumanMessage(content=message)},
         config=config
     )
-   # for msg in response['messages']:
-   #     msg.pretty_print()
-   # print("-" * 10)
-   # print("Ilosc wiadomosci w pamieci: " + str(len(response['messages'])))
-   # print("-" * 10)
-    print("=" * 10)
-    print("Chat: " + response['messages'][-1].content)
-    print("=" * 10)
+    rt1 = time.time()
+    router_invoke = rt1-rt0
+
+    
+    print(f"Router decision: {response["structured_response"].need_plan}")
+    if response['structured_response'].need_plan:
+        #call planer
+        continue
+    else:
+        #call conversational
+        ct0 = time.time()
+        answer = conversational_agent.invoke(
+            {"messages": HumanMessage(content=message)},
+            config=config
+        )
+        ct1 = time.time()
+        conversational_invoke = ct1 - ct0
+        
+        
+
+
+    # for msg in response['messages']:
+    #     msg.pretty_print()
+    # print("-" * 10)
+    # print("Ilosc wiadomosci w pamieci: " + str(len(response['messages'])))
+    # print("-" * 10)
+    print("Chat: " + answer['messages'][-1].content)
+    print(f"ri: {router_invoke} s")
+    print(f"ci: {conversational_invoke} s")
 

@@ -1,4 +1,7 @@
 import pyaudio
+import sounddevice as sd
+import queue
+from vosk import Model, KaldiRecognizer
 import webrtcvad
 import numpy as np
 from faster_whisper import WhisperModel
@@ -14,14 +17,14 @@ SILENCE_LIMIT = 15
 MIN_SPEECH_DURATION = 16 
 
 
-
-def listen(
+# heavy listen on macos m2, 6.7s for 2s audio, even on small whisper it gets down to 5.6s.
+def heavy_listen(
     format: int = FORMAT,
     channels: int = CHANNELS,
     rate: int = RATE,
     chunk: int = CHUNK,
     #transcribe params
-    transcribe_model: str = 'small-v3-turbo',
+    transcribe_model: str = 'small',
     device: str = 'cpu',
     compute_type: str = 'int8'
 ):
@@ -76,16 +79,21 @@ def listen(
                             raw_audio = b''.join(buffer)
                             audio_np = np.frombuffer(raw_audio, dtype=np.int16)
                             audio_float = audio_np.astype(np.float32) / 32768.0
+                            print(f"Audio length: {len(audio_float)/16000:.2f}s")
+                            t0 = time.time()
                             # i odpalamy transkrybcje
-                            segments, info = whisper_model.transcribe(
+                            segments, info = model.transcribe(
                                 audio_float,
-                                beam_size=5,
+                                beam_size=1,
                                 language='pl',
-                                initial_prompt='Język polski. Znaki interpunkcyjne.'
+                                initial_prompt=None
                             )
+                            segments = list(segments)
+                            t1 = time.time()
+                            print(f"Whisper: {t1-t0:.2f}s")
                         # wrzucamy wszystko do zmiennej text
-                            print('jestesmy po transkrybcji')
-                            text = "".join([segment.text for segment in segments]).strip()
+                            print('jestesmy po transkrybcji')     
+                            text = "".join(segment.text for segment in segments).strip()
                             buffer = []
                             print(text)
                             silence_counter=0
@@ -102,15 +110,52 @@ def listen(
     except Exception as e:
         return f'{type(e).__name__}: {e}'
 
+
+
+def light_listen():
+    q = queue.Queue()
+
+    model = Model("models/vosk-model-small-pl-0.22")
+
+    recognizer = KaldiRecognizer(
+        model,
+        16000
+    )
+
+    def callback(indata, frames, time, status):
+        q.put(bytes(indata))
+
+
+    with sd.RawInputStream(
+        samplerate=16000,
+        blocksize=1600,
+        dtype="int16",
+        channels=1,
+        callback=callback
+    ):
+
+        print("Light listen activated...")
+        
+        last_text = ""
+        while True:
+            data = q.get()
+
+            if recognizer.AcceptWaveform(data):
+                result = json.loads(
+                    recognizer.Result()
+                )
+                text = result["text"].strip()
+
+
+                if text and text != last_text:
+                    last_text = text
+                    yield text
+
      
 def speak():
         pass
 
 
 if (__name__=='__main__'):
-    print("Ładowanie modelu Whisper (może chwilę potrwać przy pierwszym uruchomieniu)...")
-    whisper_model = init_transcribe_model()
-    print("Model załadowany.")
- 
-    for text, delay in listen(model=whisper_model):
+    for text, delay in listen():
         print(f"[{delay:.2f}s] Rozpoznano: {text}")

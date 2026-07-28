@@ -1,0 +1,15 @@
+faster-whisper
+langchain
+langchain-core
+langchain-openai
+langgraph
+mlx-whisper
+numpy
+pyaudio
+pydantic
+python-dotenv
+requests
+sounddevice
+tavily-python
+vosk
+webrtcvad-wheels

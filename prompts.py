@@ -70,3 +70,8 @@ This requires task execution.
 Only decide whether planning is required.
 Do not answer the user's request.
 """
+
+
+# 2. Conversational 
+
+conversational_prompt = " " 
