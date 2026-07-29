@@ -23,4 +23,56 @@
 
 
 29.07.2026
+1. Problem z dobraniem polskiego modelu TTS polega na tym ze duzo popularnych dobrze dostrojonych modeli bazuje na architekturze StyleTTS2, ktory ma zaszyty phonemizer espeak-ng i wagi wytrenowane tylko na fonemach z dostepnych jezykow, model po prostu nie widzialp polskich glosek.
+2. Okej, znalazlem model nazywa sie SupersonicTTS, wspiera on jezyk polski ale projekt sam w sobie zostaje porzucony z dniem 23 lipca 2026 roku przez co nie chce na nim opierac inzynierki jako ze stracil wsparcie, moim planem jest zrobic fork tego modelu dostroic go jeszcze bardziej na jezyk polski przy pomocy datasetu    Thomcles/YodaLingua-Polish i uzywac go jako glowny model TTS, uwazam ze model TTS jest na tyle istnotny w projekcie jako ze jest to modul ktory najczesciej spotyka sie z opinia uzytkownika 
+### Problem badawczy
+3. Fine tuning to fajny aspekt badawczy i na pewno do zrobienia jako ze jest juz kod supertonic-pytorch ktory dzieki reverse engineering modelu onnx, przedstawia pipeline do fine tuningu supertonic tts v2, a my chcemy v3, wiec wezme kod supertonic-pytorch, przeroobie go na pipeline pod trenowanie trzeciej wersji, i nastepnie przetrenuje go dokladniej pod polski jezyk.  
+4. Dziala wystarczajaco dobrze ten model supertonic3 po testach, nie przejmowalbym sie na razie fine tuningiem, tym czym bym sie martwil to 
+    1. Dlugi czas od powiedzenia slowa, do uslyszenia odpowiedzi, to sie jakos nazywalo ale jest to za dlugie 
+    2. Zdecydowanie trzeba zamienic invoke na streaming 
+
+### Plan do przetestowania
+Zamiast mowa -> invoke modelu -> odpowiedz modelu do TTS -> czytanie odpowiedzi, to przechwytywanie tego co mowi uzytkownik w calosci, i potem dajemy to do modelu i zmieniamy invoke na streaming, i te streamowane chunki od razu przekazujemy do mowy, przez co mowimy od razu to co dostaniemy a nie czekamy na cala odpowiedz, i potem porownac czasy 
+Problemem jest czas
+Overall time: 25.426538944244385 s
+
+router invoke
+ri: 6.218886137008667 s
+
+conversational invoke
+ci: 11.338120937347412 s
+
+speaking time
+sp: 7.869211196899414 s
+
+to sa obecne czasy zdecydowanie za dlugie, 17 sekund na sama logike agentow gdzie konwersacja z uzytkonwikiem ma na to maksymalnie 2 sekundy, to jest 15 sekund do zbicia. 
+
+1. Zmienilem modele na gpt 4o mini zeby router i conversational byly lekkie i nie robimy reasoningu niepotrzebnie duzego, docelowo nawet mniejsze moglyby byc te modele, za to planner bylby wtedy ciezszy
+2. problem 1 sekundowe opoznineie w speak()
+3. Czytanie summarize middleware message
+czasy po poprawce zmiana model na mniejszy i streaming odpowiedzi do speak
+
+Time to First Audio: 0.71s
+
+TTS generate: 0.966s | play start: 0.000s | full audio: 0.971s
+
+Overall time: 8.20383596420288 s
+
+router invoke
+ri: 2.2742910385131836 s
+
+conversational invoke
+ci: 5.9294562339782715 s
+
+warto sprobowac co sie stanie gdy zmniejszymy total steps w speka z 8 na 5 wedlug dokumentacji supertonic zmiejszy to jakosc ale zwiekszy predkosc
+
+
+4. Duzym problem jest router, ponad 2 sekundy. Problemem moze byc to ze jest to agent, tworzy sie agent loop dostaje ogromny kontekst historie i przepala mase tokenow, zamiast tego bedzie po prostu wywolaniem modelu. zobaczymy ile to pomoze
+5. Czasowo pomaga ale problem jest inny, teraz gdy konwersator i router nie sa agentami to trace przywilej tworzenia historii automatycznie poprzez langgraph, teraz musze stworzyc klase state, graph i graph compile zeby historia sama sie dopisywala, zobaczymy czy bez agenta ale z reczna historia zyskam na czasie.
+6. Przeszedlem z langchain i create agent do langgraph i stworzylem graph gdzie node to agenci a edges to polaczenia miedzy nimi, dzieki czemu licze ze zyskam troche czasu, ale na pewno daje to wieksza elastycznosc.
+7. Na razie usuwam ale docelowo trzeba wprowadzic middleware z summarize model
+8. Nie pomoglo, zmienilem na langgraph i mam wieksza kontrole nad wywolaniem ale dalej 7 sekund do pierwszego tokenu gdzie 3 sekundy routera to zdecydowanie za dlugo. 
+
+9. Ustaiwnie modeli na 4o mini z reasoning effort minimal dalo duzo lepsze wyniki, wszystko jest w langgraphie a funkcje wywoluje bezposrednio model z historia bez calej otoczki create_agent
+10. Troche zamieszania z architektura, zostane przy langgraph juz przyszlosciowo ale musze uporzadkowac kod, przy testowaniu modelu tts duzo sie nabalaganilo
 

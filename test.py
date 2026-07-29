@@ -1,39 +1,32 @@
+from supertonic import TTS
 import sounddevice as sd
-import queue
-import json
-from vosk import Model, KaldiRecognizer
+import numpy as np
 
 
-q = queue.Queue()
+tts = TTS(auto_download=True)
 
-model = Model("models/vosk-model-small-pl-0.22")
+style = tts.get_voice_style(voice_name="M2")
 
-recognizer = KaldiRecognizer(
-    model,
-    16000
+text = """
+Cześć Marek.
+To jest test Supertonic 3 uruchomiony lokalnie.
+"""
+
+
+wav, duration = tts.synthesize(
+    text=text,
+    lang="pl",                          
+    voice_style=style,              # Voice style object
+    total_steps=8,                  # Quality: 5 (low) to 12 (high), default 8 (medium)
+    speed=1.05,                     # Speed: 0.7 (slow) to 2.0 (fast)
 )
 
+wav = np.squeeze(wav)
 
-def callback(indata, frames, time, status):
-    q.put(bytes(indata))
+sd.play(
+    wav,
+    samplerate=44100
+)
 
+sd.wait()
 
-with sd.RawInputStream(
-    samplerate=16000,
-    blocksize=8000,
-    dtype="int16",
-    channels=1,
-    callback=callback
-):
-
-    print("Mów...")
-
-    while True:
-        data = q.get()
-
-        if recognizer.AcceptWaveform(data):
-            result = json.loads(
-                recognizer.Result()
-            )
-
-            print(result["text"])

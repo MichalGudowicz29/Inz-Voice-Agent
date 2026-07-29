@@ -2,7 +2,7 @@ from langchain.agents import create_agent
 from dotenv import load_dotenv
 load_dotenv()
 
-from langchain.messages import AIMessage, HumanMessage, SystemMessage
+from langchain.messages import HumanMessage
 from langchain.agents.middleware import SummarizationMiddleware
 from tools import get_geo_data, get_weather, search_web
 
@@ -10,19 +10,21 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
 from voice import speak
 import time
+import re
 from langchain_openai import ChatOpenAI
 
 
 from langgraph.graph import StateGraph, START, END 
 from typing import Annotated, TypedDict
 from langgraph.graph.message import add_messages
-from prompts import router_prompt, RouterOutput, conversational_prompt
-
 
 class State(TypedDict):
     messages: Annotated[list, add_messages]
     need_plan: bool
 
+
+light_model = 'gpt-4o-mini'
+heavy_model = 'gpt-5-nano'
 
 #potrzeba dodac allowed msgpack poniewaz langgraph ostrzega przed nieznanymi typami gdy agent chce wyciagnac cos z pamieci. 
 checkpointer = InMemorySaver(
@@ -34,24 +36,35 @@ checkpointer = InMemorySaver(
 )
 
 
+from prompts import router_prompt, RouterOutput, conversational_prompt
 
+# Router
+
+# Konwersacja
 conversational_model = ChatOpenAI(
-    model="gpt-4o-mini",
-    temperature=0,
+    model="gpt-5-nano",
+    temperature=0
 )
 
 router_model = ChatOpenAI(
     model="gpt-4o-mini",
-    temperature=0,
+    temperature=0
 ).with_structured_output(RouterOutput)
 
 
 def conversation(messages):
     ct0 = time.time()
-    full_response = ""
-    first_token = False
 
-    for chunk in conversational_model.stream(messages):
+    stream = conversational_model.stream(messages)
+
+    sentence_buffer = ""
+    full_response = ""
+
+    first_token = False
+    first_audio = False
+
+    for chunk in stream:
+
         if not chunk.content:
             continue
 
@@ -59,17 +72,28 @@ def conversation(messages):
             print(f"TTFT: {time.time() - ct0:.3f}s")
             first_token = True
 
+        sentence_buffer += chunk.content
         full_response += chunk.content
 
-    print(f"LLM finished: {time.time() - ct0:.3f}s")
+        if re.search(r"[.!?]\s*$", sentence_buffer):
 
-    text = full_response.strip()
-    if text:
-        print(f"Speaking: {text}")
-        print(f"Time to First Audio: {time.time() - ct0:.3f}s")
-        speak(text)
+            if not first_audio:
+                print(f"Time to First Audio: {time.time() - ct0:.3f}s")
+                first_audio = True
 
-    print(f"Conversation total: {time.time() - ct0:.3f}s")
+            speak(sentence_buffer.strip())
+            sentence_buffer = ""
+
+    
+    llm_end = time.time()
+    print(f"LLM finished: {llm_end - ct0:.3f}s")
+
+    if sentence_buffer.strip():
+        speak(sentence_buffer.strip())
+
+    total = time.time() - ct0
+    print(f"Conversation total: {total:.3f}s")
+
     return full_response
 
 
@@ -77,35 +101,26 @@ def conversation(messages):
 # Node 
 def router_node(state: State):
     rt0 = time.time()
-    result = router_model.invoke([
-        SystemMessage(content=router_prompt),
-        state["messages"][-1],
-    ])
-
+    result = router_model.invoke(state['messages'])
     print(f"Router decision: {result.need_plan}, ({time.time() - rt0:.3f}s)")
     return {'need_plan': result.need_plan}
 
 def conversation_node(state: State):
     ct0 = time.time()
-    answer = conversation([
-        SystemMessage(content=conversational_prompt),
-        *state["messages"],
-    ])
-
-    print(f"Conversational ({time.time() - ct0:.3f}s)")
+    answer = conversation(state["messages"])
+    print(f"Conversational ({time.time() - ct0:.3f}s)"
     return {'messages': [AIMessage(content=answer)]} 
 
 def planner_node(state: State):
     pt0 = time.time()
     plan = "Plan xyz"
-    print(f"Planner ({time.time() - pt0:.3f}s)")
+    print(f"Planner ({time.time() - ct0:.3f}s)"
     return {'messages': [AIMessage(content=plan)]}
 
 
 builder = StateGraph(State)
 builder.add_node("router", router_node)
 builder.add_node("conversation", conversation_node)
-builder.add_node("planner", planner_node)
 
 builder.add_edge(START, "router")
 builder.add_conditional_edges(
@@ -114,7 +129,6 @@ builder.add_conditional_edges(
 )
 
 builder.add_edge("conversation", END)
-builder.add_edge("planner", END)
 graph = builder.compile(checkpointer=checkpointer)
 
 # Planner 

@@ -8,6 +8,10 @@ from faster_whisper import WhisperModel
 import json
 import requests
 import time 
+from supertonic import TTS
+import sounddevice as sd
+import numpy as np
+
 
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
@@ -110,12 +114,15 @@ def heavy_listen(
     except Exception as e:
         return f'{type(e).__name__}: {e}'
 
-
-
 def light_listen():
+    t0 = time.time()
+
     q = queue.Queue()
 
     model = Model("models/vosk-model-small-pl-0.22")
+
+    t1 = time.time()
+    print(f"[ASR] Model load time: {t1 - t0:.3f}s")
 
     recognizer = KaldiRecognizer(
         model,
@@ -135,26 +142,100 @@ def light_listen():
     ):
 
         print("Light listen activated...")
-        
+
         last_text = ""
+
         while True:
+            # czas oczekiwania na audio
+            t_wait_start = time.time()
+
             data = q.get()
+
+            t_wait_end = time.time()
+
+            # czas samego Vosk
+            t_vosk_start = time.time()
 
             if recognizer.AcceptWaveform(data):
                 result = json.loads(
                     recognizer.Result()
                 )
+
                 text = result["text"].strip()
 
+                t_vosk_end = time.time()
 
                 if text and text != last_text:
                     last_text = text
+
+                    print(
+                        f"[ASR] Wait audio: {t_vosk_start - t_wait_start:.3f}s"
+                    )
+
+                    print(
+                        f"[ASR] Vosk processing: {t_vosk_end - t_vosk_start:.3f}s"
+                    )
+
+                    print(
+                        f"[ASR] Total recognition: {t_vosk_end - t_wait_start:.3f}s"
+                    )
+
+                    print(
+                        f"[ASR] Text: {text}"
+                    )
+
                     yield text
 
-     
-def speak():
-        pass
 
+
+tts = TTS(auto_download=True)
+VOICE_NAME = 'M2'
+LANG = 'pl'
+TOTAL_STEPS = 8
+SPEED = 1.05
+SAMPLERATE = 44100
+     
+def speak(
+    text: str,
+    tts: TTS = tts,
+    voice_name: str = VOICE_NAME,
+    lang: str = LANG,
+    total_steps: int = TOTAL_STEPS,
+    speed: float = SPEED,
+    samplerate: int = SAMPLERATE
+
+):
+    t0 = time.time()
+    style = tts.get_voice_style(voice_name=voice_name)
+
+    wav, duration = tts.synthesize(
+        text=text,
+        lang=lang,
+        voice_style=style,
+        total_steps=total_steps,
+        speed=speed,
+    )
+
+    t1 = time.time()
+
+    wav = np.squeeze(wav)
+
+    t2 = time.time()
+
+    sd.play(
+        wav,
+        samplerate=samplerate
+    )
+    
+    t3 = time.time()
+
+    sd.wait()
+
+    print(
+        f"TTS generate: {t1-t0:.3f}s | "
+        f"play start: {t2-t1:.3f}s | "
+        f"full audio: {t3-t0:.3f}s"
+    )
 
 if (__name__=='__main__'):
     for text, delay in listen():

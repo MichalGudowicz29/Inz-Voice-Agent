@@ -47,7 +47,6 @@ out loud — if anything would sound wrong, robotic, or unreadable when spoken, 
 #response_format
 class RouterOutput(BaseModel):
     need_plan: bool = Field(description="Weather the planning is required")
-    reasoning: str = Field(description="Short explanation on why plannin is needed")
 
 #system_prompt
 router_prompt = """
