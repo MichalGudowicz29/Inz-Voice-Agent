@@ -22,7 +22,7 @@ MIN_SPEECH_DURATION = 16
 
 
 # heavy listen on macos m2, 6.7s for 2s audio, even on small whisper it gets down to 5.6s.
-def heavy_listen(
+def listen(
     format: int = FORMAT,
     channels: int = CHANNELS,
     rate: int = RATE,
@@ -40,16 +40,19 @@ def heavy_listen(
     """
 
     model = WhisperModel(transcribe_model, device=device, compute_type=compute_type)
+    
 
     # tutaj audio to nasz mikrofon nie przechwytuje ale tworzymy miejsce ktore bedzie
     audio = pyaudio.PyAudio()
     # tutaj dopiero przechwytujemy, input true bo chcemy nagrywac nie odtwarzac
     stream = audio.open(format=format, channels=channels, rate=rate, input=True, frames_per_buffer=chunk)
     # a tutaj sprawdzamy czy ktos mowi czy jest cisza, 3 to wartosc jak agresywnie sprawdzamy 3 to bardzo agresywny 0 to lagodny, agresywny oznacza ze jezeli nie jestem pewien to uznaje to jako cisze 
-    vad = webrtcvad.Vad(3)
+    vad = webrtcvad.Vad(2)
 
     buffer = []
     silence_counter = 0
+
+    print("Slucham...")
 
     try: 
         while True:
@@ -57,28 +60,28 @@ def heavy_listen(
             pcm_data = stream.read(chunk, exception_on_overflow=False)
             #sprawdzamy czy ten chunk jest glosem czy cisza 
             is_speach = vad.is_speech(pcm_data, rate)
-
+            
 
             if is_speach:
                 #jezeli jest mowione to wrzucamy do buffora 
                 buffer.append(pcm_data)
                 silence_counter = 0
-                print("speach is true")
+                #print("speach is true")
             else: 
                 silence_counter += 1
-                print(f'silence count = {silence_counter}')
+                #print(f'silence count = {silence_counter}')
 
                 #jezeli przekraczamy limit ciszy co oznacza koniec zdania
                 if silence_counter >= SILENCE_LIMIT:
                     # to sprawdzamy czy mamy cos w buferze
                     if buffer:
-                        print('jest bufor')
+                        #print('jest bufor')
                         # jezeli mamy i jest to dluzsze niz ustalony prog
                         if len(buffer) < MIN_SPEECH_DURATION:
                            pass 
                         else:
                             # to robimy zamiane na wartosci gotowe do transkrybcji
-                            print('zaczynam transkrybcje')
+                            #print('zaczynam transkrybcje')
                             start = time.time()
                             raw_audio = b''.join(buffer)
                             audio_np = np.frombuffer(raw_audio, dtype=np.int16)
@@ -96,19 +99,19 @@ def heavy_listen(
                             t1 = time.time()
                             print(f"Whisper: {t1-t0:.2f}s")
                         # wrzucamy wszystko do zmiennej text
-                            print('jestesmy po transkrybcji')     
+                            #print('jestesmy po transkrybcji')     
                             text = "".join(segment.text for segment in segments).strip()
                             buffer = []
                             print(text)
                             silence_counter=0
                             if text:
-                                print('zwracam tekst')
+                                #print('zwracam tekst')
                                 end=time.time()
                                 delay= end-start
-                                print(f'inside func: {text}')
+                                #print(f'inside func: {text}')
                                 yield text, delay
                             else:
-                                print('nie ma zwrotu robie continue')
+                                #print('nie ma zwrotu robie continue')
                                 continue
                         silence_counter = 0 
     except Exception as e:
@@ -236,6 +239,14 @@ def speak(
         f"play start: {t2-t1:.3f}s | "
         f"full audio: {t3-t0:.3f}s"
     )
+
+
+
+
+
+
+
+
 
 if (__name__=='__main__'):
     for text, delay in listen():

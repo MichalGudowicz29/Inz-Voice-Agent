@@ -78,7 +78,39 @@ warto sprobowac co sie stanie gdy zmniejszymy total steps w speka z 8 na 5 wedlu
 
 11. okej jest w miare porzadek, dalej denerwuje mnie ten router 1.6 sekundy i to ze lacznie czeka sie okolo 4 sekundy na audio 
 
-- [ ] Poprawic czas do pierwszego audio 
+- [x] Poprawic czas do pierwszego audio 
 - [ ] Dodac planner node ktory bedzie w stanie wywolac agenta planuajcego
+- [x] Poprawic problem jest taki ze gdy node routera zaczyna to sprawdza czy need plan jest true, ale problem jest w tym ze nigdy nie zmieniamy wartosci tego na True albo False poniewaz nasz conversational agent tylko czyta i wywoluje konwersacje a powinien jeszcze sprawdzac stan i go zmieniac
 
+Okej wszystko jest na ten moment moim zdaniem w porzadku oprocz
+1. zbyt robotyczny glos
+2. calkiem dlugo mieli TTS, ale to sie przetestuje na mocniejszym komputerze
+
+Teraz mozna isc w tworzenie odnogi plannera, weryfikator i tak dalej, zeby mogl wykonywac mocniejsze zadania, 
+
+zalozenie jest takie 
+Planner dostaje zadanie, uklada plan jak je wykonac, nastepnie do weryfikatora, nastepnie do wykonawcy, wykonawca wykonuje np. tool1 tool2 tool3, potem jest synchronizator, ktory dostaje odpowiedzi z toolsow, plan i weryfikacje i scala to w odpowiedz, nastepnie wyjscie z tego to jest wykonanie zadania 
+
+na ten moment agent traktuje plannera jako osobe ktora ma cos zaplanowac np. wesele, to jest wina promptu trzeba go zmienic na to aby wiedzial ze planner jest od wykonania zadania ktore jest poza jego zasiegiem np. 
+
+User; zaplanuj mi wesele 
+agent asystent powinien przeslac zadanie do planner, nastepnie planner powinien ulozyc plan czego bedzie potrzebowal np. 
+1. Miejsce na wesele 
+2. Dojazd
+weryfikator powiedzial okej faktycznie mamy takie toolsy jestesmy w stanie to wykonac
+wykonawca szuka w internecie, sprawdza dojazd na pkp api, 
+synchronizator bierze wszystkie informacje spaja to i daje koncowa odpowiedz
+
+w kazdym momencie gdzie czegos brakuje agent powinien zawiesic swoje dzialanie i dopytac np. okej a w jakim miejscu chcesz to wesele, zapytac i potem wrocic do planowania - to moze byc ciezkie 
+
+plan na jutro to usiasc do tego plannera
+dodac tts jako node
+
+## wazne  
+agenci to po prostu autonomiczne jednostki ktore maja swoje zadanie toolsy i moge sobie wykonywac to zadanie w srodku
+node w langgraph odpowiada za pytanie, na tym etapie workflow kto ma sie wywolac
+natomiast edge to po prostu miejsca gdzie jest polaczenie. 
+
+czyli mozemy stworzyc 3 roznych agentow ktorzy beda mieli osobe zadania a mozemy je umiescic w jedym node, 
+node to kamienie na rzece, na kamieniach moze byc mech, kamyczki i inne, a woda to nasze workflow, kamyczki sa polaczone edge tam gdzie sie styka mozna przejsc a tam gdzie nie to nie mozna
 

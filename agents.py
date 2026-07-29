@@ -8,93 +8,116 @@ from tools import get_geo_data, get_weather, search_web
 
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
-from voice import speak
 import time
-from langchain_openai import ChatOpenAI
 
 
 from langgraph.graph import StateGraph, START, END 
 from typing import Annotated, TypedDict
 from langgraph.graph.message import add_messages
-from prompts import router_prompt, RouterOutput, conversational_prompt
+from prompts import assistant_prompt
+from pydantic import BaseModel, Field
+from typing import Literal
+from langchain_openai import ChatOpenAI
+from voice import speak
 
 
 class State(TypedDict):
     messages: Annotated[list, add_messages]
-    need_plan: bool
+    action: Literal[
+        "chat",
+        "planner",
+        "weather",
+        "search",
+        "calendar",
+        "ask_user"
+    ]
 
+class AgentOutput(BaseModel):
+    action: Literal[
+        "chat",
+        "planner",
+        "weather",
+        "search",
+        "calendar",
+        "ask_user"
+    ] = Field(
+        description="The next action the assistant should take"
+    )
+
+    answer: str = Field(
+        description="Short spoken response for the user. Empty when another agent should handle the task."
+    )
 
 #potrzeba dodac allowed msgpack poniewaz langgraph ostrzega przed nieznanymi typami gdy agent chce wyciagnac cos z pamieci. 
 checkpointer = InMemorySaver(
     serde=JsonPlusSerializer(
         allowed_msgpack_modules=[
-            ("prompts", "RouterOutput"),   # (nazwa modułu, nazwa klasy)
+            ("prompts", "AgentOutput"),   # (nazwa modułu, nazwa klasy)
         ]
     )
 )
 
 
 
-conversational_model = ChatOpenAI(
-    model="gpt-4o-mini",
-    temperature=0,
+# langchain agents
+weather_agent = create_agent(
+    model=ChatOpenAI(
+        model="gpt-4o-mini",
+        temperature=0
+    ),
+    tools=[
+        get_geo_data,
+        get_weather
+    ],
+    system_prompt="""
+    Jesteś agentem pogodowym.
+
+    Twoim zadaniem jest odpowiedzieć użytkownikowi na pytania dotyczące pogody.
+
+    Jeśli potrzebujesz lokalizacji:
+    1. Pobierz współrzędne przez get_geo_data.
+    2. Następnie użyj get_weather.
+
+    Zawsze zwracaj krótką odpowiedź gotową do przeczytania przez TTS.
+    """
 )
 
-router_model = ChatOpenAI(
+
+
+
+llm = ChatOpenAI(
     model="gpt-4o-mini",
     temperature=0,
-).with_structured_output(RouterOutput)
+).with_structured_output(AgentOutput)
 
 
-def conversation(messages):
+# node
+# glowny asystent wejsciowy
+def assistant_node(state: State):
+
     ct0 = time.time()
-    full_response = ""
-    first_token = False
-
-    for chunk in conversational_model.stream(messages):
-        if not chunk.content:
-            continue
-
-        if not first_token:
-            print(f"TTFT: {time.time() - ct0:.3f}s")
-            first_token = True
-
-        full_response += chunk.content
-
-    print(f"LLM finished: {time.time() - ct0:.3f}s")
-
-    text = full_response.strip()
-    if text:
-        print(f"Speaking: {text}")
-        print(f"Time to First Audio: {time.time() - ct0:.3f}s")
-        speak(text)
-
-    print(f"Conversation total: {time.time() - ct0:.3f}s")
-    return full_response
-
-
-
-# Node 
-def router_node(state: State):
-    rt0 = time.time()
-    result = router_model.invoke([
-        SystemMessage(content=router_prompt),
-        state["messages"][-1],
+    
+    response = llm.invoke([
+        SystemMessage(content=assistant_prompt),
+        *state["messages"]
     ])
+    print(f"Conversation node: {time.time() - ct0:.3f}s")
+    print(f"Action {response.action}")
+    
 
-    print(f"Router decision: {result.need_plan}, ({time.time() - rt0:.3f}s)")
-    return {'need_plan': result.need_plan}
+    if response.action == "chat":
+        speak(response.answer)
 
-def conversation_node(state: State):
-    ct0 = time.time()
-    answer = conversation([
-        SystemMessage(content=conversational_prompt),
-        *state["messages"],
-    ])
 
-    print(f"Conversational ({time.time() - ct0:.3f}s)")
-    return {'messages': [AIMessage(content=answer)]} 
+    return {
+        "messages": [
+            AIMessage(content=response.answer)
+        ],
+        "action": response.action
+    }
 
+
+# planner 
 def planner_node(state: State):
     pt0 = time.time()
     plan = "Plan xyz"
@@ -103,19 +126,28 @@ def planner_node(state: State):
 
 
 builder = StateGraph(State)
-builder.add_node("router", router_node)
-builder.add_node("conversation", conversation_node)
+builder.add_node("assistant_node", assistant_node)
 builder.add_node("planner", planner_node)
 
-builder.add_edge(START, "router")
+builder.add_edge(START, "assistant_node")
 builder.add_conditional_edges(
-    "router",
-    lambda state: "conversation" if not state["need_plan"] else "planner",
+    "assistant_node",
+    lambda state: state["action"],
+    {
+        "chat": END,
+        "planner": "planner"
+    }
 )
 
-builder.add_edge("conversation", END)
 builder.add_edge("planner", END)
+
 graph = builder.compile(checkpointer=checkpointer)
+
+# Generowanie wizualizacji grafu
+png = graph.get_graph().draw_mermaid_png()
+
+with open("agent_graph.png", "wb") as f:
+    f.write(png)
 
 # Planner 
 
@@ -124,4 +156,8 @@ graph = builder.compile(checkpointer=checkpointer)
 # Orkiestrator 
 
 
+if __name__ == "__main__":
+    png = graph.get_graph().draw_mermaid_png()
 
+    with open("agent_graph.png", "wb") as f:
+        f.write(png)

@@ -5,7 +5,7 @@ load_dotenv()
 from langchain.messages import HumanMessage
 import time
 
-from voice import light_listen
+from voice import light_listen, listen
 from agents import graph
 
 
@@ -15,18 +15,21 @@ chat_config = {
     }
 }
 
-listener = light_listen()
+listener = listen()
+#listener = light_listen()
 
-for message in listener:
+for message,delay in listener:
 
     if not message:
         continue
     
     ot0 = time.time()
     print(f"Ty: {message}") 
+    print(f"ASR delay: {delay:.2f}s")
+
 
     result = graph.invoke(
-        {"messages": [HumanMessage(message)]},
+        {"messages": [HumanMessage(content=message)]},
         config=chat_config
     ) 
     ot1 = time.time()
