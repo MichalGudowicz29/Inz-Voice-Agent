@@ -76,3 +76,9 @@ warto sprobowac co sie stanie gdy zmniejszymy total steps w speka z 8 na 5 wedlu
 9. Ustaiwnie modeli na 4o mini z reasoning effort minimal dalo duzo lepsze wyniki, wszystko jest w langgraphie a funkcje wywoluje bezposrednio model z historia bez calej otoczki create_agent
 10. Troche zamieszania z architektura, zostane przy langgraph juz przyszlosciowo ale musze uporzadkowac kod, przy testowaniu modelu tts duzo sie nabalaganilo
 
+11. okej jest w miare porzadek, dalej denerwuje mnie ten router 1.6 sekundy i to ze lacznie czeka sie okolo 4 sekundy na audio 
+
+- [ ] Poprawic czas do pierwszego audio 
+- [ ] Dodac planner node ktory bedzie w stanie wywolac agenta planuajcego
+
+
