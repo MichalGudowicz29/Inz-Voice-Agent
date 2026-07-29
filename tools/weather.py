@@ -1,13 +1,10 @@
 import os
 import requests
-from dotenv import load_dotenv, find_dotenv
+from dotenv import load_dotenv
 load_dotenv()
-from typing import Any
 from langchain.tools import tool
-from tavily import TavilyClient
 
 OPEN_WEATHER_API = os.getenv("OPEN_WEATHER_API")
-tavily_client = TavilyClient()
 
 @tool 
 def get_geo_data(city_name: str, country_code: str, limit: int) -> str:
@@ -71,8 +68,3 @@ def get_weather(lon:float, lat:float) -> str:
         return str(response.json())
     except:
         return "Get_weather tool did not work, API issue, call did not work, inform user about API issue"
-
-@tool
-def search_web(query:str) -> str:
-    """Search web for information"""
-    return tavily_client.search(query)

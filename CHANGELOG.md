@@ -114,3 +114,7 @@ natomiast edge to po prostu miejsca gdzie jest polaczenie.
 czyli mozemy stworzyc 3 roznych agentow ktorzy beda mieli osobe zadania a mozemy je umiescic w jedym node, 
 node to kamienie na rzece, na kamieniach moze byc mech, kamyczki i inne, a woda to nasze workflow, kamyczki sa polaczone edge tam gdzie sie styka mozna przejsc a tam gdzie nie to nie mozna
 
+Dodalem podzial na foldery i wstepnie to wszystko rozrzucilem na pliki, trzeba to rozplatac do konca i unormowac importy.
+
+
+nie wiem czy mowilem ale odchodze od architektury routera, na ten moment jest to zbedny balast, jest czat do small talkow z akcjami jak jakas akcja sie wywola to machina rusza na ciezsze modele i innych agentow. 

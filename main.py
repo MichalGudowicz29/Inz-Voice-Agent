@@ -5,8 +5,8 @@ load_dotenv()
 from langchain.messages import HumanMessage
 import time
 
-from voice import light_listen, listen
-from agents import graph
+from graph import graph
+from voice.asr import listen
 
 
 chat_config = {
@@ -39,4 +39,3 @@ for message,delay in listener:
     print("Chat: " + result['messages'][-1].content)
     print(f"Overall time: {overall_time} s")
     
-
