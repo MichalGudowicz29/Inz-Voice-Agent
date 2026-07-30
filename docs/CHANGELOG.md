@@ -17,8 +17,8 @@
 7. poprawka w prompcie routera, poniewaz gdy pytam go co mam zrobic nawet w emocjonalnych sprawach nie chce odpowiadac konkretnie tylko mysli ze odpowiedz wymaga planowania
 8. Poprawa Checkpointera aby mogl wywolywac customowe moduly z pamieci takie jak RouterOuput
 9. Router dziala, przetestowany, na casualowej rozmowie, gdy poprosilem o wykonanie wyszukania w internecie proba wywolania planner
-- [ ] Dodac agenta plannera 
-- [ ] Dodac TTS na koncowej odpowiedzi
+- [x] Dodac agenta plannera 
+- [x] Dodac TTS na koncowej odpowiedzi
 
 
 
@@ -79,7 +79,7 @@ warto sprobowac co sie stanie gdy zmniejszymy total steps w speka z 8 na 5 wedlu
 11. okej jest w miare porzadek, dalej denerwuje mnie ten router 1.6 sekundy i to ze lacznie czeka sie okolo 4 sekundy na audio 
 
 - [x] Poprawic czas do pierwszego audio 
-- [ ] Dodac planner node ktory bedzie w stanie wywolac agenta planuajcego
+- [x] Dodac planner node ktory bedzie w stanie wywolac agenta planuajcego
 - [x] Poprawic problem jest taki ze gdy node routera zaczyna to sprawdza czy need plan jest true, ale problem jest w tym ze nigdy nie zmieniamy wartosci tego na True albo False poniewaz nasz conversational agent tylko czyta i wywoluje konwersacje a powinien jeszcze sprawdzac stan i go zmieniac
 
 Okej wszystko jest na ten moment moim zdaniem w porzadku oprocz
@@ -118,3 +118,16 @@ Dodalem podzial na foldery i wstepnie to wszystko rozrzucilem na pliki, trzeba t
 
 
 nie wiem czy mowilem ale odchodze od architektury routera, na ten moment jest to zbedny balast, jest czat do small talkow z akcjami jak jakas akcja sie wywola to machina rusza na ciezsze modele i innych agentow. 
+
+
+30.07.2026
+
+Dziala planner jest wystarczajaco dobry, zadaje pytanie doprecyzowujace, jeszcze raz wykonuje zadanie, zwraca plan do weryfikatora, good enough, 
+
+Plan na dzis to 
+- [x] Zrobic weryfikatora 
+    - [x] Dostajemy plan i task, stworzyc prompt ktory zlepia to i weryfikuje czy sie pokrywa
+    - [x] Stworzyc statycznego Exec agenta, ktory wywola sie tylko wtedy jak plan bedzie juz zweryfikowany, musi to byc node poniewaz status weryfikacji planu bedzie w State
+
+Planner wykonuje swoje zadanie, graph przechodzi do wykonawcy, wykonawca statycznie zwraca nam informacje ze wykonuje swoje zadanie. 
+

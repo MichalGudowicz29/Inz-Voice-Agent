@@ -6,6 +6,7 @@ from prompts import assistant_prompt, planner_prompt
 from voice.tts import speak
 from agents.planner import planner_agent
 from agents.assistant import assistant_agent
+from agents.verifier import verification_agent
 from .state import State
 
 
@@ -57,23 +58,24 @@ def planner_node(state: State):
 
 # weryfikator 
 def verification_node(state: State):
-    et0 = time.time()
-    print("i am verification node")
-    print(f"The plan i got {state.get("plan")}")
-    print(f"The task i got {state.get("task")}")
+    vt0 = time.time()
+    
+    response = verification_agent(state["task"], state["plan"])
 
-    print(f"Verification: {time.time() - et0}")
+    print(f"Verification: {time.time() - vt0}")
 
-    verified = True
-    if verified:
-        return {
-            "verified": True
-        }
-    return {
-        "verified": False
-    }
+    return {"verification": 
+              {
+                "verified": response.verified, 
+                "reasoning": response.reasoning
+              }
+           }
 
-
+# exec
+def execution_node(state: State):
+    et0 = time.time() 
+    print(" I am executing something... ")
+    return {"execution_results": ['abc','abc']}
 
 
 

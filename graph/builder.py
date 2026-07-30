@@ -2,7 +2,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
 from langgraph.graph import END, START, StateGraph
 
-from .nodes import assistant_node, planner_node, verification_node
+from .nodes import assistant_node, planner_node, verification_node, execution_node
 from .state import State
 
 
@@ -19,6 +19,7 @@ builder = StateGraph(State)
 builder.add_node("assistant_node", assistant_node)
 builder.add_node("planner", planner_node)
 builder.add_node("verification", verification_node)
+builder.add_node("executor", execution_node)
 
 
 # building graph
@@ -42,7 +43,8 @@ builder.add_conditional_edges(
             
     }
 )
-builder.add_edge("verification", END)
+builder.add_edge("verification", "executor")
+builder.add_edge("executor", END)
 
 
 graph = builder.compile(checkpointer=checkpointer)
