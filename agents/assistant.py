@@ -11,10 +11,6 @@ class AgentOutput(BaseModel):
     action: Literal[
         "chat",
         "planner",
-        "weather",
-        "search",
-        "calendar",
-        
     ] = Field(
         description="The next action the assistant should take"
     )

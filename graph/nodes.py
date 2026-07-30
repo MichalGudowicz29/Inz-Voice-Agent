@@ -21,8 +21,7 @@ def assistant_node(state: State):
     print(f"Conversation node: {time.time() - ct0:.3f}s")
     print(f"Action {response.action}")
 
-    if response.action == "chat":
-        speak(response.answer)
+    speak(response.answer)
 
     return {
         "messages": [
@@ -35,10 +34,11 @@ def assistant_node(state: State):
 # planner 
 def planner_node(state: State):
     pt0 = time.time()
+    print(f"Starting planning...")
     response = planner_agent([*state["messages"]])
     print(f"Planner ({time.time() - pt0:.3f}s)")
 
-    if response.need_clarification:
+    if response.needs_clarification:
         speak(response.clarification_question)
         return {
             "messages": [AIMessage(content=response.clarification_question)],
@@ -52,6 +52,25 @@ def planner_node(state: State):
         "plan": response.steps,
         "action": "verify_plan",
         "task": response.task 
+    }
+
+
+# weryfikator 
+def verification_node(state: State):
+    et0 = time.time()
+    print("i am verification node")
+    print(f"The plan i got {state.get("plan")}")
+    print(f"The task i got {state.get("task")}")
+
+    print(f"Verification: {time.time() - et0}")
+
+    verified = True
+    if verified:
+        return {
+            "verified": True
+        }
+    return {
+        "verified": False
     }
 
 

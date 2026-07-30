@@ -1,7 +1,8 @@
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from prompts import planner_prompt
-from pydantic import BaseModel, Field, Optional
+from pydantic import BaseModel, Field 
+from typing import Optional
 
 load_dotenv()
 
@@ -28,7 +29,7 @@ class PlanOutput(BaseModel):
 
 
 llm = ChatOpenAI(
-    model="gpt-5-nano"
+    model="gpt-4o-mini"
 ).with_structured_output(PlanOutput)
 
 

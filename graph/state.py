@@ -6,9 +6,6 @@ class State(TypedDict):
     action: Literal[
         "chat",
         "planner",
-        "weather",
-        "search",
-        "calendar",
         "ask_user",
         "verify_plan",
     ]
