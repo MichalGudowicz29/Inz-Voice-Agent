@@ -1,12 +1,13 @@
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from prompts import planner_prompt
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, Optional
 
 load_dotenv()
 
 
 class PlanOutput(BaseModel):
+    task: str = Field(description="Oryginalne zadanie od uzytkownika, czego oczekuje od systemu. Jaki jest main task")
     needs_clarification: bool = Field(
         description="True tylko jeśli bez doprecyzowania od użytkownika nie da się "
                     "zbudować wykonalnego planu. False jeśli masz wystarczająco informacji."

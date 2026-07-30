@@ -1,6 +1,10 @@
-def build_planner_prompt(tools: list) -> str:
+from tools import ALL_TOOLS
+
+def build_tools_block(tools: list) -> str:
+    return "\n".join(f"- {t.name}: {t.description.strip()}" for t in tools)
+
+def _build_planner_prompt(tools: list) -> str:
     tools_block = build_tools_block(tools)
- 
     return f"""
 You are the Planning agent in a multi-agent voice assistant.
  
@@ -104,3 +108,7 @@ concrete and complete. A vague plan or an unnecessary clarification question
 both waste their time — pick precisely one failure mode to avoid: guessing
 wrong, or asking when you didn't need to.
 """
+
+planner_prompt = _build_planner_prompt(ALL_TOOLS)
+
+    

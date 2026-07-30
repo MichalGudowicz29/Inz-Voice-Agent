@@ -35,16 +35,26 @@ def assistant_node(state: State):
 # planner 
 def planner_node(state: State):
     pt0 = time.time()
-
     response = planner_agent([*state["messages"]])
-
     print(f"Planner ({time.time() - pt0:.3f}s)")
-    print(response)
+
+    if response.need_clarification:
+        speak(response.clarification_question)
+        return {
+            "messages": [AIMessage(content=response.clarification_question)],
+            "plan": [],
+            "action": "ask_user",
+            "task": response.task
+        }
+
 
     return {
         "plan": response.steps,
-        "action": "verify_plan" 
+        "action": "verify_plan",
+        "task": response.task 
     }
+
+
 
 
 
