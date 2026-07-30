@@ -14,7 +14,7 @@ class AgentOutput(BaseModel):
         "weather",
         "search",
         "calendar",
-        "ask_user"
+        
     ] = Field(
         description="The next action the assistant should take"
     )

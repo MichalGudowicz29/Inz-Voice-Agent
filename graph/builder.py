@@ -10,6 +10,7 @@ checkpointer = InMemorySaver(
     serde=JsonPlusSerializer(
         allowed_msgpack_modules=[
             ("agents.assistant", "AgentOutput"),
+            ("agents.planner", "PlanOutput")
         ]
     )
 )

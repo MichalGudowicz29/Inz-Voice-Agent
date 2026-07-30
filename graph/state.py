@@ -9,5 +9,11 @@ class State(TypedDict):
         "weather",
         "search",
         "calendar",
-        "ask_user"
+        "ask_user",
+        "verify_plan",
     ]
+    task: str
+    plan: list[str]
+    verification: dict
+    execution_results: list
+    final_answer: str

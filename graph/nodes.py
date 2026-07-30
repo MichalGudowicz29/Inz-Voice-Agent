@@ -2,8 +2,10 @@ import time
 
 from agents.assistant import llm
 from langchain.messages import AIMessage, SystemMessage
-from prompts import assistant_prompt
+from prompts import assistant_prompt, planner_prompt
 from voice.tts import speak
+from agents.planner import planner_agent
+from agents.assistant import assistant_agent
 from .state import State
 
 
@@ -14,10 +16,8 @@ def assistant_node(state: State):
 
     ct0 = time.time()
     
-    response = llm.invoke([
-        SystemMessage(content=assistant_prompt),
-        *state["messages"]
-    ])
+    response = assistant_agent([*state["messages"]])
+
     print(f"Conversation node: {time.time() - ct0:.3f}s")
     print(f"Action {response.action}")
 
@@ -35,6 +35,17 @@ def assistant_node(state: State):
 # planner 
 def planner_node(state: State):
     pt0 = time.time()
-    plan = "Plan xyz"
+
+    response = planner_agent([*state["messages"]])
+
     print(f"Planner ({time.time() - pt0:.3f}s)")
-    return {'messages': [AIMessage(content=plan)]}
+    print(response)
+
+    return {
+        "plan": response.steps,
+        "action": "verify_plan" 
+    }
+
+
+
+
