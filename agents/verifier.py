@@ -19,7 +19,7 @@ class VerificationOutput(BaseModel):
 
 
 llm = ChatOpenAI(
-    model="gpt-5-nano"
+    model="gpt-4o-mini"
 ).with_structured_output(VerificationOutput)
 
 

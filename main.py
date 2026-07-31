@@ -1,4 +1,5 @@
 from dotenv import load_dotenv
+import uuid
 load_dotenv()
 
 #langchain graph 
@@ -11,7 +12,7 @@ from voice.asr import listen
 
 chat_config = {
     "configurable": {
-        "thread_id": "conversation"
+        "thread_id": uuid.uuid4()
     }
 }
 
