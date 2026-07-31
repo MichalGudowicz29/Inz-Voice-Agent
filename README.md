@@ -2,7 +2,7 @@
 
 ## Obecna architektura
 
-![Architektura systemu](agent_graph.png)
+![Architektura systemu](docs/architecture_visualisation/30_07_2026.png)
 
 ## Przykład działania
 Kolorowe kropki dodane tylko dla widocznosci w repo
