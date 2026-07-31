@@ -1,0 +1,7 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "voice_agent": "graph.builder:graph"
+  },
+  "env": ".env"
+}

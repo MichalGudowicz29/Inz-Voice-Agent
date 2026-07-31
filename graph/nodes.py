@@ -7,6 +7,7 @@ from voice.tts import speak
 from agents.planner import planner_agent
 from agents.assistant import assistant_agent
 from agents.verifier import verification_agent
+from agents.executor import executor_agent
 from .state import State
 
 
@@ -36,7 +37,11 @@ def assistant_node(state: State):
 def planner_node(state: State):
     pt0 = time.time()
     print(f"Starting planning...")
-    response = planner_agent([*state["messages"]])
+    success = state.get("executor_success", True)
+    reason = state.get("executor_fail_reasoning", "")
+
+    response = planner_agent([*state["messages"]], success, reason)
+
     print(f"Planner ({time.time() - pt0:.3f}s)")
 
     if response.needs_clarification:
@@ -73,10 +78,35 @@ def verification_node(state: State):
 
 # exec
 def execution_node(state: State):
-    et0 = time.time() 
-    print(" I am executing something... ")
-    return {"execution_results": ['abc','abc']}
+    et0 = time.time()
+    response = executor_agent(state["task"], state["plan"])
+    print(f"Execution: {time.time() - et0}")
 
+    output = response["structured_response"]
+
+    print(output.final_answer)
+
+    if output.success:
+        return {
+        "execution_results": output,
+        "final_answer": output.final_answer,
+        "executor_success": output.success,
+    }
+
+
+    return {
+            "execution_results": output,
+            "final_answer": output.final_answer,
+            "executor_fail_reasoning": output.failure_reason,
+            "executor_success": output.success,
+        }
+
+
+
+
+
+
+    
 
 
 

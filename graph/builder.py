@@ -44,11 +44,23 @@ builder.add_conditional_edges(
     }
 )
 builder.add_edge("verification", "executor")
+builder.add_conditional_edges(
+    "executor",
+    lambda state: END if state["executor_success"] == True else "planner",  
+    #path map do grafiki
+    {
+        "planner":"planner",
+        END: END
+            
+    }
+)
+
+
 builder.add_edge("executor", END)
 
 
-graph = builder.compile(checkpointer=checkpointer)
-
+#graph = builder.compile(checkpointer=checkpointer)
+graph = builder.compile()
 
 def write_graph_png(path: str = "agent_graph.png") -> None:
     try:

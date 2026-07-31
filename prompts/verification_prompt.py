@@ -6,7 +6,6 @@ def build_tools_block(tools: list) -> str:
     return "\n".join(f"- {t.name}: {t.description.strip()}" for t in tools)
  
  
-# --- Prompt buduje się RAZ przy imporcie, tylko z tools (statyczne) ---
 def _build_verification_prompt(tools: list) -> str:
     tools_block = build_tools_block(tools)
  
@@ -114,6 +113,9 @@ Be strict. A plan that mostly works but has one broken dependency or one
 unrequested extra step should still be verified=False — partial correctness
 is not correctness, and a failed Executor run costs more than one more
 Planner iteration.
+
+Remember that next agent (executor) cannot return to the planning state you are responsible to fully verify if the plan is complete and fully achievable
+
 """
  
  

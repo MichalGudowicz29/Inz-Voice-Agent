@@ -26,6 +26,9 @@ class PlanOutput(BaseModel):
         description="Uporządkowana lista kroków dla agenta-egzekutora. Pusta lista "
                     "jeśli needs_clarification=True."
     )
+    number_of_steps: int = Field(
+            description="How many steps does plan has"
+    )
 
 
 llm = ChatOpenAI(
@@ -33,14 +36,18 @@ llm = ChatOpenAI(
 ).with_structured_output(PlanOutput)
 
 
-def planner_agent(messages):
+def planner_agent(messages, success, reason):
 
-    return llm.invoke(
-        [
-            {
-                "role": "system",
-                "content": planner_prompt,
-            },
-            *messages,
-        ]
-    )
+    system_prompt = planner_prompt
+
+    if not success:
+        system_prompt += (
+            f"\n\nThe previous execution failed.\n"
+            f"Reason: {reason}\n"
+            "Create a new improved plan that avoids this failure."
+        )
+
+    return llm.invoke([
+        {"role": "system", "content": system_prompt},
+        *messages,
+    ])

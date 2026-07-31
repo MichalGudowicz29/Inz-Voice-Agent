@@ -13,4 +13,6 @@ class State(TypedDict):
     plan: list[str]
     verification: dict
     execution_results: list
+    executor_success: bool
+    executor_fail_reasoning: str
     final_answer: str
