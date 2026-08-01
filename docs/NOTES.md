@@ -138,7 +138,7 @@ Zaczac robic wykonawce, stworzyc statycznego synchronizatora i zobaczyc czy w og
 1. Mozna w kazdym node dodac wiadomosc, bardzo krotka ktora podtrzyma konwersacje z uzytkownikiem i powie co obecnie robi agnet, to troche znieczuli dlugi czas wykonania
 2. Zeby to bylo mozliwe trzeba zrobic asynchrocznie funkcje speak() zeby nie blokowala calego programu w momencie gdy chcemy uzytkownikowi cos powiedziec bo inaczej bedziemy wysylac mu wiadomosc zeby potrzymac z nim rozmowe a wydluzymy czas o 2s * ile mamy node do przejscia. 
 - [x] Zrobic wykonawce
-- [ ] Zrobic statycznego synchronizatora
+- [x] Zrobic statycznego synchronizatora
 - [ ] Sprawdzic jak mozna zrobic funkcje speak w innym watku, listen w sumie tez moglby byc w innym watku i wiadomosci pchac w kolejke, albo dodac system przerywania, tylko z tym to trzeba ostroznie bo moze byc irytujace, najlepiej zeby funkcja listen dziala w tle a gdy agent cos robi co chcemy zatrzymac to moze reagowac na komende "stop" ale to na pozniej
 
 DOdalem wykonawce jako osobnego agenta i osobnego node, uporzadkowalem toolsy jako agenci, troche overkill z search agent ale to tylko jako przedstawienie architektury, potem sie zmieni. 
@@ -147,5 +147,7 @@ DOdalem wykonawce jako osobnego agenta i osobnego node, uporzadkowalem toolsy ja
 Dodalem rowniez fallback, jezeli wykonawca napotka blad, zwraca do stanu bald i reason czemu nie dziala a to idzie do plannera i poprawia plan, teraz jak to pisze to mysle ze zamiast do plannera powinno isc do glownego agenta i postawic czy w ogole ten blad czemu nie dziala jest do naprawienia czy nie, bo jezeli nie to mowimy uzytkownikowi ze nie i idziemy dalej ale to jako dodatek 
 - [ ] Dodac zeby wykonawca nie wracal do plannera tylko do glownego agenta bo error moze byc nie tylko bledem planu, moze byc bardzo duzo powodow na ktore planner nie ma wplywu, ale w sumie planner moze zmienic plan zeby zrobic jakis bypass, ale mniejsza na  razie trzeba teraz brac output z exec i go wywalic na zewnatrz i przeczytac. 
 
+ Dowiedzialem sie ze GIL global interpreter lock jest zwalniany przy operacjach io i bibliotekach C/C++ jawnie, wiec multithreading tutaj ma sens bo najpewniej supertonic czyli nasz tts model najpewniej na takowej bazuje, podczas gdy biblioteka supertonic bedzie robic text to speech nasz graph bedzie mogl sie wykonywac poniewaz nie blokujemy mu GIL
 
+Dodalem wiec kolejke w glownym watku poniewaz samo dodawanie do kolejki to praktycznie zerowe obciazenie, a thread worker w ktorym dzieje sie TTS wykonuje sie na osobnym watku przez co mam nadzieje ze czasowo wyjdzie tak jakby dzialaly praktycznie jednoczesnie
 

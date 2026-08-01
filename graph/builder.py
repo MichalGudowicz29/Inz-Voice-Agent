@@ -2,7 +2,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
 from langgraph.graph import END, START, StateGraph
 
-from .nodes import assistant_node, planner_node, verification_node, execution_node
+from .nodes import assistant_node, planner_node, verification_node, execution_node, synthesizer_node
 from .state import State
 
 
@@ -10,7 +10,8 @@ checkpointer = InMemorySaver(
     serde=JsonPlusSerializer(
         allowed_msgpack_modules=[
             ("agents.assistant", "AgentOutput"),
-            ("agents.planner", "PlanOutput")
+            ("agents.planner", "PlanOutput"),
+            ("agents.executor", "ExecutorOutput")
         ]
     )
 )
@@ -20,6 +21,7 @@ builder.add_node("assistant_node", assistant_node)
 builder.add_node("planner", planner_node)
 builder.add_node("verification", verification_node)
 builder.add_node("executor", execution_node)
+builder.add_node("synthesizer", synthesizer_node)
 
 
 # building graph
@@ -46,17 +48,14 @@ builder.add_conditional_edges(
 builder.add_edge("verification", "executor")
 builder.add_conditional_edges(
     "executor",
-    lambda state: END if state["executor_success"] == True else "planner",  
+    lambda state: "synthesizer" if state["executor_success"] == True else "planner",  
     #path map do grafiki
     {
         "planner":"planner",
-        END: END
+        "synthesizer": "synthesizer"
             
     }
 )
-
-
-builder.add_edge("executor", END)
 
 
 #graph = builder.compile(checkpointer=checkpointer)

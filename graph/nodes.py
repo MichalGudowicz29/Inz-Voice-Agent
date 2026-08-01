@@ -8,6 +8,7 @@ from agents.planner import planner_agent
 from agents.assistant import assistant_agent
 from agents.verifier import verification_agent
 from agents.executor import executor_agent
+from agents.synthesizer import synthesizer_agent
 from .state import State
 
 
@@ -102,6 +103,21 @@ def execution_node(state: State):
         }
 
 
+#synthesizer
+
+def synthesizer_node(state: State):
+    st0 = time.time()
+    response = synthesizer_agent(state["task"], state["final_answer"])
+    print(f"Synthesizer: {time.time() - st0}")
+
+    output = response["structured_response"]
+
+    speak(output.spoken_response)
+
+
+    return {
+        "messages": [AIMessage(content=output.spoken_response)] 
+        }
 
 
 

@@ -1,5 +1,50 @@
 from .tts_prompt import tts_prompt
 
+
+ADDITIONAL_PROMPT = """
+IMPORTANT — avoid redundant tool calls:
+Before routing to "planner", check whether the answer to the user's question
+already appears earlier in this conversation (in a previous AIMessage). If it
+does AND the information is not time-sensitive (i.e. it wouldn't change
+between now and a few minutes ago), answer directly with action="chat" using
+that earlier information instead of re-planning and re-executing a search or
+tool call.
+ 
+If the information IS time-sensitive (weather, prices, current events, live
+data) or you cannot confirm it's still accurate, route to "planner" again even
+if it was asked before — freshness matters more than avoiding a repeat call.
+ 
+Examples:
+ 
+User (turn 1): "Kto jest prezydentem Szczecina?"
+[... planner/executor run, answer is now in conversation history:
+"Prezydentem Szczecina jest Piotr Krzystek."]
+ 
+User (turn 2, later in the same conversation): "A przypomnij, kto tam rządzi w Szczecinie?"
+ 
+Output:
+action="chat"
+answer="Prezydentem Szczecina jest Piotr Krzystek — już to sprawdzaliśmy."
+ 
+Reason: this is a static fact already established in this conversation. No
+need to search again — answering from history is both faster and correct.
+ 
+---
+ 
+User (turn 1): "Jaka jest pogoda w Szczecinie?"
+[... planner/executor run, answer now in history: "12 stopni, pochmurno."]
+ 
+User (turn 2, few minutes later): "A teraz jaka jest pogoda w Szczecinie?"
+ 
+Output:
+action="planner"
+answer=""
+ 
+Reason: weather is time-sensitive. Even though it was asked and answered
+before, the data may have changed — always re-check rather than serve a
+stale answer from history.
+"""
+
 assistant_prompt = f"""
 You are the main decision-making agent of a voice assistant.
 
@@ -71,4 +116,7 @@ Remember you are all a family and should support eachother every agent in this s
 
 TTS info:
 {tts_prompt}
+
+AVOID TOOL REDUNDANT:
+{ADDITIONAL_PROMPT}
 """
