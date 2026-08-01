@@ -2,67 +2,18 @@
 
 ## Obecna architektura
 
-![Architektura systemu](docs/architecture_visualisation/30_07_2026.png)
+![Architektura systemu](docs/demo/1.png)
 
 ## Przykład działania
-Kolorowe kropki dodane tylko dla widocznosci w repo
-```text
-Slucham...
+![demo1](docs/demo/2.png)
+![demo2](docs/demo/3.png)
 
-🟢 Audio length: 1.53s
 
-🟢 Whisper: 1.49s
 
-Cześć, nazywam się Michał.
+## Uzycie
+Po dodaniu zmiennych systemowych w .env
+```console
+langgraph dev
 
-🟣 Ty: Cześć, nazywam się Michał.
+```
 
-🟢 ASR delay: 1.49s
-
-🟢 Conversation node: 1.887s
-
-🟢 Action: chat
-
-🟢 TTS generate: 1.177s | play start: 0.000s | full audio: 1.230s
-
-🟠 Chat: Cześć Michał, miło cię poznać! Jak mogę ci dzisiaj pomóc?
-
-🟢 Overall time: 8.647780179977417 s
-
-🟢 Audio length: 2.04s
-
-🟢 Whisper: 1.51s
-
-Sprawdźmy pogodę w Szczecinie.
-
-🟣 Ty: Sprawdźmy pogodę w Szczecinie.
-
-🟢 ASR delay: 1.51s
-
-🟢 Conversation node: 1.823s
-
-🟢 Action: planner
-
-🟢 TTS generate: 1.308s | play start: 0.000s | full audio: 1.451s
-
-Starting planning...
-
-🟢 Planner (3.098s)
-
-i am verification node
-
-The plan i got
-[
-  "Wywołaj get_geo_data dla city_name='Szczecin', country_code='PL', limit=1",
-  "Wywołaj get_weather z lat/lon zwróconym przez get_geo_data"
-]
-
-The task i got:
-Sprawdzenie aktualnej pogody w Szczecinie.
-
-🟢 Verification: 0.0000429s
-
-🟠 Chat: Oczywiście, poczekaj chwilę, tylko sprawdzę prognozę pogody dla Szczecina.
-
-🟢 Overall time: 12.375360012054443 s
-```'''
