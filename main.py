@@ -50,10 +50,10 @@ for message, delay, reason in listener:
 
         answer, delay, reason = next(listener)
 
-        if reason:
+        while reason:
             print(f"asr fail: reason '{reason}'")
             speak("Nie zrozumiałem. Czy możesz powtórzyć?")
-            continue
+            answer, delay, reason = next(listener)
 
         result = graph.invoke(
             Command(resume=answer),

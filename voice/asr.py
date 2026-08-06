@@ -17,6 +17,7 @@ SILENCE_LIMIT = 15
 MIN_SPEECH_DURATION = 16 
 
 
+
 # heavy listen on macos m2, 6.7s for 2s audio, even on small whisper it gets down to 5.6s.
 def listen(
     format: int = FORMAT,
@@ -144,7 +145,7 @@ def listen(
                                 continue
                         silence_counter = 0 
     except Exception as e:
-        return f'{type(e).__name__}: {e}'
+        yield None, 0, f'{type(e).__name__}: {e}'
 
 def light_listen():
     t0 = time.time()
