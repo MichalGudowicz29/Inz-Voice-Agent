@@ -117,23 +117,6 @@ def synthesizer_node(state: State):
         "messages": [AIMessage(content=output.spoken_response)] 
         }
 
-# clarification
-
-def clarification_node(state: State):
-
-    question = state["clarification_question"]
-
-    speak(question)
-
-    text, _ = next(listener)
-
-    return {
-        "messages": [
-            HumanMessage(content=text)
-        ]
-    }
-
-
 
 
     
