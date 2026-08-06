@@ -16,18 +16,29 @@ SAMPLERATE = 44100
 # konsumuje kolejke po kolei, zeby audio na siebie nie nachodzilo
 # top 1 priority zeby graph nie czekal ani sekundy, speak powinno nakladac zerowy delay na graph
 
+can_listen = threading.Event()
+can_listen.set() 
+
+
 _speech_queue: queue.Queue = queue.Queue()
 
 
 def _playback_worker():
     while True:
+        print(f"[Worker] waiting for queue...")
         text, style_kwargs = _speech_queue.get()
+        print(f"[Worker] got job at {time.time():.3f}")
+
+        can_listen.clear()
+
         try:
+            print(f"[Worker] start synth at {time.time():.3f}")
             _synthesize_and_play(text, **style_kwargs)
-        except Exception as e:
-            print(f"[TTS worker] blad: {type(e).__name__}: {e}")
+            print(f"[Worker] synth finished at {time.time():.3f}")
         finally:
+            can_listen.set()
             _speech_queue.task_done()
+            
 
 
 _worker_thread = threading.Thread(target=_playback_worker, daemon=True)
@@ -49,6 +60,8 @@ def _synthesize_and_play(
     t0 = time.time()
     style = tts.get_voice_style(voice_name=voice_name)
  
+    print(f"Characters: {len(text)}")
+    print(text)
     wav, duration = tts.synthesize(
         text=text,
         lang=lang,

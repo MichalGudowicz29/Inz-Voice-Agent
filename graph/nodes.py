@@ -1,7 +1,8 @@
 import time
 
 from agents.assistant import llm
-from langchain.messages import AIMessage, SystemMessage
+from langchain.messages import AIMessage, SystemMessage, HumanMessage
+from langgraph.types import interrupt
 from prompts import assistant_prompt, planner_prompt
 from voice.tts import speak
 from agents.planner import planner_agent
@@ -23,8 +24,9 @@ def assistant_node(state: State):
 
     print(f"Conversation node: {time.time() - ct0:.3f}s")
     print(f"Action {response.action}")
-
-    speak(response.answer)
+    
+    if response.answer:
+        speak(response.answer)
 
     return {
         "messages": [
@@ -46,14 +48,9 @@ def planner_node(state: State):
     print(f"Planner ({time.time() - pt0:.3f}s)")
 
     if response.needs_clarification:
-        speak(response.clarification_question)
-        return {
-            "messages": [AIMessage(content=response.clarification_question)],
-            "plan": [],
-            "action": "ask_user",
-            "task": response.task
-        }
-
+        clarification = interrupt(response.clarification_question)
+        state["messages"].append(HumanMessage(content=clarification))
+        response = planner_agent([*state["messages"]], success, reason)
 
     return {
         "plan": response.steps,
@@ -89,6 +86,7 @@ def execution_node(state: State):
 
     if output.success:
         return {
+        "messages": [AIMessage(content=output.final_answer)],
         "execution_results": output,
         "final_answer": output.final_answer,
         "executor_success": output.success,
@@ -118,6 +116,22 @@ def synthesizer_node(state: State):
     return {
         "messages": [AIMessage(content=output.spoken_response)] 
         }
+
+# clarification
+
+def clarification_node(state: State):
+
+    question = state["clarification_question"]
+
+    speak(question)
+
+    text, _ = next(listener)
+
+    return {
+        "messages": [
+            HumanMessage(content=text)
+        ]
+    }
 
 
 

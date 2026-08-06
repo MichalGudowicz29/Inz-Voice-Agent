@@ -2,7 +2,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
 from langgraph.graph import END, START, StateGraph
 
-from .nodes import assistant_node, planner_node, verification_node, execution_node, synthesizer_node
+from .nodes import assistant_node, planner_node, verification_node, execution_node, synthesizer_node, clarification_node
 from .state import State
 
 
@@ -22,6 +22,7 @@ builder.add_node("planner", planner_node)
 builder.add_node("verification", verification_node)
 builder.add_node("executor", execution_node)
 builder.add_node("synthesizer", synthesizer_node)
+builder.add_node("clarification", clarification_node)
 
 
 # building graph
@@ -35,16 +36,8 @@ builder.add_conditional_edges(
         "planner": "planner"
     }
 )
-builder.add_conditional_edges(
-    "planner",
-    lambda state: END if state["action"] == "ask_user" else "verification",  
-    #path map do grafiki
-    {
-        "verification":"verification",
-        END: END
-            
-    }
-)
+builder.add_edge("planner", "verification")
+builder.add_edge("clarification", "planner")
 builder.add_edge("verification", "executor")
 builder.add_conditional_edges(
     "executor",
@@ -58,8 +51,8 @@ builder.add_conditional_edges(
 )
 
 
-#graph = builder.compile(checkpointer=checkpointer)
-graph = builder.compile()
+graph = builder.compile(checkpointer=checkpointer)
+#graph = builder.compile()
 
 def write_graph_png(path: str = "agent_graph.png") -> None:
     try:

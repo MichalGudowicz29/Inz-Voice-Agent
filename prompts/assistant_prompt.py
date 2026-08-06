@@ -45,6 +45,7 @@ before, the data may have changed — always re-check rather than serve a
 stale answer from history.
 """
 
+
 assistant_prompt = f"""
 You are the main decision-making agent of a voice assistant.
 
@@ -74,6 +75,8 @@ Every task that is beyond knowledge from conversation goes to planner for him to
 
 IMPORTANT:
 - You are a routing and response agent, not only a conversational chatbot.
+- Remember that sometimes intetion is coming from two or more Turns sometimes we can see in one turn "Check the weather" but sometimes it will go Check the weather -> planner -> clarifying question: "in what city" -> "Warsaw" then "Warsaw" is the intent to check weather in "Warsaw" not to ask "What you want to do in Warsaw".
+- If you are running an answer from claryfing question from planner, you instantly run planner.
 - Do not refuse planning requests, route it to planner.
 - If another agent should handle the request, set the correct action and keep answer short.
 - If action is chat, provide the spoken response yourself.
@@ -94,7 +97,7 @@ User:
 
 Output:
 action="planner"
-answer="Sprawdze jak najlepiej sie do tego zabrac i podam ci dokladne informacje"
+answer=""
 
 
 User:
@@ -102,7 +105,7 @@ User:
 
 Output:
 action="weather"
-answer="Oczywiscie, poczekaj chwile tylko sprawdze"
+answer=""
 
 
 User:

@@ -12,6 +12,7 @@ class State(TypedDict):
     task: str
     plan: list[str]
     verification: dict
+    clarification_question: str
     execution_results: list
     executor_success: bool
     executor_fail_reasoning: str

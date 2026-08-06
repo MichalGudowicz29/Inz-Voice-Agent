@@ -139,7 +139,7 @@ Zaczac robic wykonawce, stworzyc statycznego synchronizatora i zobaczyc czy w og
 2. Zeby to bylo mozliwe trzeba zrobic asynchrocznie funkcje speak() zeby nie blokowala calego programu w momencie gdy chcemy uzytkownikowi cos powiedziec bo inaczej bedziemy wysylac mu wiadomosc zeby potrzymac z nim rozmowe a wydluzymy czas o 2s * ile mamy node do przejscia. 
 - [x] Zrobic wykonawce
 - [x] Zrobic statycznego synchronizatora
-- [ ] Sprawdzic jak mozna zrobic funkcje speak w innym watku, listen w sumie tez moglby byc w innym watku i wiadomosci pchac w kolejke, albo dodac system przerywania, tylko z tym to trzeba ostroznie bo moze byc irytujace, najlepiej zeby funkcja listen dziala w tle a gdy agent cos robi co chcemy zatrzymac to moze reagowac na komende "stop" ale to na pozniej
+- [x] Sprawdzic jak mozna zrobic funkcje speak w innym watku, listen w sumie tez moglby byc w innym watku i wiadomosci pchac w kolejke, albo dodac system przerywania, tylko z tym to trzeba ostroznie bo moze byc irytujace, najlepiej zeby funkcja listen dziala w tle a gdy agent cos robi co chcemy zatrzymac to moze reagowac na komende "stop" ale to na pozniej
 
 DOdalem wykonawce jako osobnego agenta i osobnego node, uporzadkowalem toolsy jako agenci, troche overkill z search agent ale to tylko jako przedstawienie architektury, potem sie zmieni. 
 
@@ -150,4 +150,31 @@ Dodalem rowniez fallback, jezeli wykonawca napotka blad, zwraca do stanu bald i 
  Dowiedzialem sie ze GIL global interpreter lock jest zwalniany przy operacjach io i bibliotekach C/C++ jawnie, wiec multithreading tutaj ma sens bo najpewniej supertonic czyli nasz tts model najpewniej na takowej bazuje, podczas gdy biblioteka supertonic bedzie robic text to speech nasz graph bedzie mogl sie wykonywac poniewaz nie blokujemy mu GIL
 
 Dodalem wiec kolejke w glownym watku poniewaz samo dodawanie do kolejki to praktycznie zerowe obciazenie, a thread worker w ktorym dzieje sie TTS wykonuje sie na osobnym watku przez co mam nadzieje ze czasowo wyjdzie tak jakby dzialaly praktycznie jednoczesnie
+
+
+05.08.2026
+1. Zmienic agenta glosowego na jakiegos normalniejszego
+Dziala worker thread, sprawdzilem czy aby na pewno dobrze sie wszystko przelacza i jest w porzadku, 
+Problemem myslalem ze jest to ze w momencie gdy agent mowi to jednoczesnie slucha i to blokuje GIL, to bylo bledne zalozenie problemem bylo to ze po wykonaniu synthezatora wracalismy od razu do petli for message in listener i czekalismy na kolejna wiadomosc zamiast najpierw przeczytac, dlatego dodalem event can_listen ktory jest przelaczany w momencie kiedy jest uruchamiany playback worker, czyli jezeli mowimy to nie sluchamy. Zauwazylem ze czas oczekiwania na tekst z modelu Text to speach rosnie liniowo, dla 50 znakow mielismy okolo 1.5s, a dla 250znakow okolo 6 sekund, powinienem dodac w prompcie zeby byl krotszy u synthezatora, i dodac pozniej jakis mechanizm wyswietlania dlugich informacji, tak aby wszystko co wazne bylo mowione a wszystko co dlugie ale istotne gdzies wyswietlane.   
+
+Problemem jest to ze planner gdy wymaga pytania doprecyzowujacego, z plannera wracamy do asystenta glownego ktory ma gigantyczny prompt a my jedyne co chcemy to powiedziec na glos pytanie doprecyzowujace i wziac odpowiedz, nic wiecj zadnego wywolania. Chyba dodam po prostu Human in the tool HITL, ktory bedzie krecil pytania w kolko az bedzie mial wszystkie odpowiedzi 
+
+
+06.08.2026 
+Problemem bylo to ze asystent glosowy w trakcie planowania gdy musial dowiedziec sie cos, cofal sie az do asystenta glownego, dowiedzialem sie ze jest w langgraph funkcja interrupt ktora pozwolila mi zatrzymac node w trakcie dzialania wywolanie logiki kodu a nastepnie wrocenie wznowienie stanu w node. Dzieki temu dopytuje po prostu daje speak(dopytanie) i potem biore ostatnie zdanie z buffora ktorego powiedzial uzytkownik
+
+Problemem rowniez jest zapetlanie sie w momencie kiedy do mikrofonu przechodzi jakis belkot albo kaszlenie, halucynacje. Dowiedzialem sie ze sam whisper zwraca parametry ktore pozwola mi oddzielic tekst od belkotu i halucynacji. 
+
+| Parametr | Znaczenie | Zakres / próg |
+|---|---|---|
+| `avg_logprob` | Pewność wygenerowanego tekstu. Bliżej `0` = lepiej. | OK: `>-1.0`, odrzuć: `<-1.0` |
+| `no_speech_prob` | Szansa, że w audio nie było mowy. | `0-1`, odrzuć: `>0.45` |
+| `compression_ratio` | Wykrywa powtórzenia / halucynacje tekstowe. | OK: `<2.4`, odrzuć: `>2.4` |
+
+Wstepnie nie wiedzialem jakie dac parametry wiec chat mi zaproponowal ustawic takie poczatkowe ( w trakcie sie dostroi ). Gdy taki threshold zostanie osiagniety zwracamy powod dlaczego wykruszyl sie program, i wiadomosc none, wiec gdy wiadomosc none robimy ze nie rozumiem i zeby powtorzyc. 
+
+Dziala idealnie, gdy parametry sa za niskie mamy recovery i dopytanie o sprecyzowanie.
+
+
+
 

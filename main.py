@@ -4,6 +4,10 @@ load_dotenv()
 
 #langchain graph 
 from langchain.messages import HumanMessage
+from langgraph.types import Command
+
+from voice.tts import speak
+
 import time
 
 from graph import graph
@@ -19,11 +23,16 @@ chat_config = {
 listener = listen()
 #listener = light_listen()
 
-for message,delay in listener:
+#static 
+#listener = ["Czesc podasz mi pogode w Szczecinie", "Super powiedz mi jaka jest temperatura obecnie"]
 
-    if not message:
+for message, delay, reason in listener:
+
+    if reason:
+        print(f"asr fail: reason '{reason}'")
+        speak("Nie zrozumiałem. Czy możesz powtórzyć?")
         continue
-    
+
     ot0 = time.time()
     print(f"Ty: {message}") 
     print(f"ASR delay: {delay:.2f}s")
@@ -33,6 +42,24 @@ for message,delay in listener:
         {"messages": [HumanMessage(content=message)]},
         config=chat_config
     ) 
+
+    if "__interrupt__" in result:
+
+        question = result["__interrupt__"][0].value
+        speak(question)
+
+        answer, delay, reason = next(listener)
+
+        if reason:
+            print(f"asr fail: reason '{reason}'")
+            speak("Nie zrozumiałem. Czy możesz powtórzyć?")
+            continue
+
+        result = graph.invoke(
+            Command(resume=answer),
+            config=chat_config
+        )
+
     ot1 = time.time()
     overall_time = ot1-ot0
 

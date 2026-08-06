@@ -7,7 +7,7 @@ import numpy as np
 from faster_whisper import WhisperModel
 import json
 import time 
-
+from voice.tts import can_listen
 
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
@@ -52,6 +52,7 @@ def listen(
 
     try: 
         while True:
+            can_listen.wait()
             # pobieramy jedna ramke 30 ms, poniewaz w chunk jest ustawione 0.03, pcm to pulse data modulation
             pcm_data = stream.read(chunk, exception_on_overflow=False)
             #sprawdzamy czy ten chunk jest glosem czy cisza 
@@ -74,8 +75,11 @@ def listen(
                         #print('jest bufor')
                         # jezeli mamy i jest to dluzsze niz ustalony prog
                         if len(buffer) < MIN_SPEECH_DURATION:
-                           pass 
+                            buffer=[]
+                            pass 
                         else:
+                            rejected: bool = False
+                            reason: str = ""
                             # to robimy zamiane na wartosci gotowe do transkrybcji
                             #print('zaczynam transkrybcje')
                             start = time.time()
@@ -91,7 +95,36 @@ def listen(
                                 language='pl',
                                 initial_prompt=None
                             )
+                            #print(f"[Whisper info] {info}")
                             segments = list(segments)
+                            
+                            for segment in segments:
+                                if segment.avg_logprob < -1.0:
+                                    rejected = True
+                                    reason = "low_logprob"
+                                    break
+
+                                if segment.no_speech_prob > 0.45:
+                                    rejected = True
+                                    reason = "no_speech"
+                                    break
+
+                                if segment.compression_ratio > 2.4:
+                                    rejected = True
+                                    reason = "compression"
+                                    break
+
+                            if rejected:
+                                buffer = []
+                                silence_counter = 0
+                                yield None, 0, reason 
+                                continue
+                                #print("text:", segment.text)
+                                #print("avg_logprob:", segment.avg_logprob)
+                                #print("no_speech_prob:", segment.no_speech_prob)
+                                #print("compression_ratio:", segment.compression_ratio)
+
+
                             t1 = time.time()
                             print(f"Whisper: {t1-t0:.2f}s")
                         # wrzucamy wszystko do zmiennej text
@@ -105,7 +138,7 @@ def listen(
                                 end=time.time()
                                 delay= end-start
                                 #print(f'inside func: {text}')
-                                yield text, delay
+                                yield text, delay, None
                             else:
                                 #print('nie ma zwrotu robie continue')
                                 continue
