@@ -6,7 +6,7 @@ load_dotenv()
 from langchain.messages import HumanMessage
 from langgraph.types import Command
 
-from voice.tts import speak
+from voice.tts import speak, wait_until_speech_done
 
 import time
 import argparse
@@ -67,6 +67,7 @@ if test:
         
         print(f"Odpowiedz, [Tura {i}]: " + result['messages'][-1].content)
         speak(result['messages'][-1].content)
+        wait_until_speech_done()
 
     print(scenario)
     

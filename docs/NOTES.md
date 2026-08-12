@@ -222,3 +222,18 @@ Ale to tylko jako POC pod koniec inzynierki.
 Trzeba dodac scenariusze, nagrac glosowo kilka tur pod konkretne zadania i zrobic pytest z pomiarem czasu na ture etc.
 
 Dodalem mozliwosc dodawania scenariuszow do folderu test scenarios i tam folder mozna sobie stworzyc i dodac po kolei pliki audio wav, jezeli beda w zlej czestotliwosci to zrobi sie automatycznie resampling jezeli damy stereo to bedzie mono itp itd, najwazniejsze ze dziala jedyne jaki jest problem to dziwnie dziala ten speak(), ja wiem ze problem jest z GIL i blokowaniem kolejki, ten watek osobny dziala jakos nienaturalnie ale to do odplatania ewentualnie zmiany architektury zeby ten TTS na koncu i ASR na poczatku dzialaly jakos inaczej bardziej niezaleznie ale kolejkowo 
+
+
+Sa juz gotowe bardzo szybie speech to speech modele, ale problemem jest to ze wszystkie sa przez api, zaden nie dziala lokalnie, wszystko dziala przez API i CLOUD, a celem asystenta jest dzialanie w pelni lokalnie, zeby zadne dane nie byly wysylane do zewnetrznych serwerow. 
+
+Trzeba potestowac na mocniejszym komputerze i zamienic chatgpt na ollama bielik i wtedy agent juz bedzie 100% lokalny. 
+
+
+
+##### minimalizacja tts
+
+zmniejszylem objetosc kodu tts i wielowatkowsci TTS dla klarownosci i prostoty 
+
+Najwazniejszy jest sposob dzialania 
+
+stworzylem kolejke (poniewaz jest bezpieczna do uzywania w wielowaktowych systemach poniewaz ma wbudowany lock, ktory zapobiega dostepowi do pamieci wiecej niz jednemu watku na raz) do ktorej funkcja speak(), wywolywana wszedzie w kodzie tam gdzie jest potrzeba powiedzenia czegos, sama funkcja speak to wsadzenie do kolejki samo put() jest obciazeniem milisekundowym prze co nie blokujemy sobie programu ciezkim TTS, nastepnie worker powolany do zycia aby czytam na glos tekst wyciaga z tej kolejki FIFO elementy i czyta je na glos, nie blokujac grafu poniewaz dziala to w innym watku przez co odchodzimy troche od kaskadowosci a przechodzimy troche bardziej w strone jednoczesnej pracy grafu i czytania na glos, przez co samo czytanie odbywa sie "w tle", 
