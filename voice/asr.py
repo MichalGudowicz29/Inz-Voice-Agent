@@ -177,35 +177,51 @@ def load_voice(path):
 
 
 
+
 def load_scenario(
     path,
-    transcribe_model: str = 'small',
-    device: str = 'cpu',
-    compute_type: str = 'int8'
+    transcribe_model: str = "small",
+    device: str = "cpu",
+    compute_type: str = "int8",
 ):
-    """ Goes through folder with wav files and load them into list, returns list of a float32 normlized audio data """
     scenario = []
-    model = WhisperModel(transcribe_model, device=device, compute_type=compute_type)
-    print(f"Running '{path}' scenario")
-    for i, entry in enumerate(os.scandir(path)):
-         
-        if entry.name.endswith(".wav"):
-            print(f"  File {i}: {entry.path}") 
-            audio = load_voice(entry.path) 
-            start = time.perf_counter()
-            segments, info = model.transcribe(
-                audio,
-                beam_size=1,
-                language="pl"
-            )
-            delay = start - time.time()
+    model = WhisperModel(
+        transcribe_model,
+        device=device,
+        compute_type=compute_type
+    )
 
-            text = "".join(s.text for s in segments).strip()
-            scenario.append({
-                "text": text,
-                "delay": delay,
-                "file": entry.name,
-            })
+    print(f"Running '{path}' scenario")
+
+    files = sorted(
+        (
+            entry for entry in os.scandir(path)
+            if entry.is_file() and entry.name.endswith(".wav")
+        ),
+        key=lambda entry: int(os.path.splitext(entry.name)[0])
+    )
+
+    for i, entry in enumerate(files):
+        print(f"  File {i + 1}: {entry.path}")
+
+        audio = load_voice(entry.path)
+
+        start = time.perf_counter()
+        segments, info = model.transcribe(
+            audio,
+            beam_size=1,
+            language="pl"
+        )
+        delay = time.perf_counter() - start
+
+        text = "".join(s.text for s in segments).strip()
+
+        scenario.append({
+            "text": text,
+            "delay": delay,
+            "file": entry.name,
+        })
+
     return scenario
 
 
