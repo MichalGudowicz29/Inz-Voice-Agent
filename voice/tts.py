@@ -19,6 +19,32 @@ speech_queue = Queue()
 
 can_listen = Event()
 can_listen.set()
+def worker():
+    while True:
+        text = q.get()
+
+        can_listen.clear()
+
+        try:
+            
+
+            wav, duration = tts.synthesize(
+                text,
+                voice_style=VOICE_STYLE
+            )
+
+            
+
+            sd.play(wav, samplerate=SAMPLERATE)
+
+            
+
+            sd.wait()
+
+            
+        finally:
+            can_listen.set()
+            q.task_done()
 
 def worker():
     while True:
@@ -26,11 +52,24 @@ def worker():
         can_listen.clear()
         
         try: 
+
+            t0 = time.perf_counter()
+            print(f"[Worker] start synth: {t0:.3f}")
+
             wav, duration = tts.synthesize(text, style)
             wav = np.squeeze(wav)
 
+            t1 = time.perf_counter()
+            print(f"[Worker] synth finished: {t1 - t0:.3f}s")
+
             sd.play(wav)
+            t2 = time.perf_counter()
+            print(f"[Worker] play called after: {t2 - t0:.3f}s")
+
             sd.wait()
+            t3 = time.perf_counter()
+            print(f"[Worker] playback finished: {t3 - t2:.3f}s")
+
         
         finally:
             can_listen.set()
