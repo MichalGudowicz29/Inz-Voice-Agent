@@ -19,32 +19,6 @@ speech_queue = Queue()
 
 can_listen = Event()
 can_listen.set()
-def worker():
-    while True:
-        text = q.get()
-
-        can_listen.clear()
-
-        try:
-            
-
-            wav, duration = tts.synthesize(
-                text,
-                voice_style=VOICE_STYLE
-            )
-
-            
-
-            sd.play(wav, samplerate=SAMPLERATE)
-
-            
-
-            sd.wait()
-
-            
-        finally:
-            can_listen.set()
-            q.task_done()
 
 def worker():
     while True:
@@ -78,6 +52,7 @@ def worker():
 Thread(target=worker, daemon=True).start()
 
 def speak(text):
+    print(f"[QUEUE] {text[:40]}")
     speech_queue.put(text)
 
 

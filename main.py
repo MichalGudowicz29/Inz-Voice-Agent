@@ -34,40 +34,49 @@ chat_config = {
 if test:
     print("Test mode")
     scenario = load_scenario("test_scenarios/weather/")
-    for i, sample in enumerate(scenario): 
-        delay = sample["delay"]
-        path = sample["file"]
+    i = 0
+
+    while i < len(scenario):
+        sample = scenario[i]
+
         message = sample["text"]
-        print(f"Pytanie [Tura {i}]: {message}") 
-        print(f"[ASR]: {delay:.3f}")
+        delay = sample["delay"]
+
+        print(f"Pytanie [Tura {i}]: {message}")
         speak(message)
 
         result = graph.invoke(
             {"messages": [HumanMessage(content=message)]},
             config=chat_config
-        ) 
+        )
 
         if "__interrupt__" in result:
-
             question = result["__interrupt__"][0].value
             speak(question)
+            wait_until_speech_done()
 
-            answer, delay, reason = next(listener)
+            # przejdź do następnej wiadomości scenariusza
+            i += 1
 
-            while reason:
-                print(f"asr fail: reason '{reason}'")
-                speak("Nie zrozumiałem. Czy możesz powtórzyć?")
-                answer, delay, reason = next(listener)
+            if i >= len(scenario):
+                raise RuntimeError(
+                    "Scenariusz zakończył się, ale agent oczekiwał odpowiedzi użytkownika."
+                )
+
+            answer = scenario[i]["text"]
+
+            print(f"Odpowiedź użytkownika: {answer}")
 
             result = graph.invoke(
                 Command(resume=answer),
                 config=chat_config
             )
 
-        
-        print(f"Odpowiedz, [Tura {i}]: " + result['messages'][-1].content)
-        speak(result['messages'][-1].content)
+        response = result["messages"][-1].content
+        print(response)
         wait_until_speech_done()
+
+        i += 1
 
     print(scenario)
     
