@@ -22,8 +22,8 @@ def assistant_node(state: State):
     
     response = assistant_agent([*state["messages"]])
 
-    print(f"Conversation node: {time.time() - ct0:.3f}s")
-    print(f"Action {response.action}")
+    print(f"[Conversation]: {time.time() - ct0:.3f}s")
+    print(f"(Action): '{response.action}'")
     
     if response.answer:
         speak(response.answer)
@@ -45,7 +45,7 @@ def planner_node(state: State):
 
     response = planner_agent([*state["messages"]], success, reason)
 
-    print(f"Planner ({time.time() - pt0:.3f}s)")
+    print(f"[Planner] ({time.time() - pt0:.3f}s)")
 
     if response.needs_clarification:
         clarification = interrupt(response.clarification_question)
@@ -65,7 +65,7 @@ def verification_node(state: State):
     
     response = verification_agent(state["task"], state["plan"])
 
-    print(f"Verification: {time.time() - vt0}")
+    print(f"[Verification]: {time.time() - vt0}")
 
     return {"verification": 
               {
@@ -78,7 +78,7 @@ def verification_node(state: State):
 def execution_node(state: State):
     et0 = time.time()
     response = executor_agent(state["task"], state["plan"])
-    print(f"Execution: {time.time() - et0}")
+    print(f"Execution: {time.time() - et0:.3f}")
 
     output = response["structured_response"]
 
@@ -106,7 +106,7 @@ def execution_node(state: State):
 def synthesizer_node(state: State):
     st0 = time.time()
     response = synthesizer_agent(state["task"], state["final_answer"])
-    print(f"Synthesizer: {time.time() - st0}")
+    print(f"[Synthesizer]: {time.time() - st0:.3f}")
 
     output = response["structured_response"]
 

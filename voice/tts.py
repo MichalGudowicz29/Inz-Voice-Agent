@@ -5,6 +5,7 @@ import queue
 import threading
 from supertonic import TTS
 
+
 tts = TTS(auto_download=True)
 VOICE_NAME = 'M2'
 LANG = 'pl'

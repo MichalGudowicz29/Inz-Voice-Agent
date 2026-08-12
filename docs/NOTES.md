@@ -145,7 +145,6 @@ DOdalem wykonawce jako osobnego agenta i osobnego node, uporzadkowalem toolsy ja
 
 
 Dodalem rowniez fallback, jezeli wykonawca napotka blad, zwraca do stanu bald i reason czemu nie dziala a to idzie do plannera i poprawia plan, teraz jak to pisze to mysle ze zamiast do plannera powinno isc do glownego agenta i postawic czy w ogole ten blad czemu nie dziala jest do naprawienia czy nie, bo jezeli nie to mowimy uzytkownikowi ze nie i idziemy dalej ale to jako dodatek 
-- [ ] Dodac zeby wykonawca nie wracal do plannera tylko do glownego agenta bo error moze byc nie tylko bledem planu, moze byc bardzo duzo powodow na ktore planner nie ma wplywu, ale w sumie planner moze zmienic plan zeby zrobic jakis bypass, ale mniejsza na  razie trzeba teraz brac output z exec i go wywalic na zewnatrz i przeczytac. 
 
  Dowiedzialem sie ze GIL global interpreter lock jest zwalniany przy operacjach io i bibliotekach C/C++ jawnie, wiec multithreading tutaj ma sens bo najpewniej supertonic czyli nasz tts model najpewniej na takowej bazuje, podczas gdy biblioteka supertonic bedzie robic text to speech nasz graph bedzie mogl sie wykonywac poniewaz nie blokujemy mu GIL
 
@@ -176,5 +175,50 @@ Wstepnie nie wiedzialem jakie dac parametry wiec chat mi zaproponowal ustawic ta
 Dziala idealnie, gdy parametry sa za niskie mamy recovery i dopytanie o sprecyzowanie.
 
 
+- [ ] Dodac pytest
+- [ ] Wlaczyc komputer kola i przejsc na GPU 
 
 
+11.08.2026
+
+Czesc konwersacyjna jest problematyczna ze wzgledu na opoznienie, konwersacja moze byc wiekszoscia natury asystenta a zajmuje sporo czasu, zauwazylem w literaturze ze problemem moze byc kaskadowosc architektury, sposoby SpeechLLM odrzucaja tekst jako posredni reprezentant intecji zamiast tego operuje na danych akustycznych. 
+Obecnie: 
+Uzytkownik mowi -> encoder whispera zamienia to na wektory, decoder whispera zamienia to na tekst -> graph invoke, mieli tekst, zwraca tekst -> tekst jest wrzucany do text do speech i dopiero slyszymy go w sluchawkach. 
+
+Docelowo ( na ten moment )
+Uzytkownik mowi -> Petla speech LLM ktora operuje na danych akustycznych bez tekstu pomiedzy i jest w stanie wywolac graph (jakos) -> opcjonalnie graph z agetami -> wyjscie z petli dorzucenie do pamieci wynikow pracy agentow.
+
+Petla speech LLM zakladalaby uzycie samego encodera whispera aby spektogram zamienic na kolejne embedingi
+
+problemem omowionym w literaturze moze byc fakt, ze whisper encoder zwraca tensor 512D, a przez to ze bielik jest tworzony na rodzinie llama mistral najpewniej ma hidden size 4096 przez co musimy zwrony tensor rozszerzyc od wymiaru 4096.
+
+Kolejnym problemem jest to ze slowo zazwyczaj ma maksymalnie kilka tokenow natomiast whisper encoder zwraca czesto okolo 40 wektorow na sekunde, przez co szybko bysmy zapchali pamiec. Czyli potrzebne sa dwie warstwy dodatkowe 1. Ktora zamienia wektory z 512D na 4096D, oraz druga warstawa ktra zamienia 1000 embedingow na np. 100
+
+Waznym aspektem jest to ze mamy juz Whisper ktory swietnie rozumie mowe, oraz bielik ktory swietnie rozumie jezyk polski. Jedyne co trzeba zrobic to nauczyc maly adapter miedzy nimi aby mogly sie dobrze porozumiewac
+
+
+Problemem jest to ze sama zamiana z whisperowego (1500, 512) na (100, 4096) nic nie da bo embedding whispera inaczej rozumie slowa niz embedding bielika, trzeba nauczyc adapter, ktory bylby w stanie zmienic whisperowe 1500, 512 na 100, 4096 ale nie w liniowy sposob a przy pomocy jakiegos MLP aby znalezc optymalny sposob na zamiane embeddingow whispera na embedingi bielika.
+
+
+Nauka wygladalby w taki sposob: 
+Bierzemy dataset audio-tekst przepuszczamy audio przez encoder whispera i tokenizer i embedding bielika, i pokazujemy MLP ze mamy whisper embeding przedstawiony w sposob X, mamy embeding bielika przedstawiony w sposob Y. Znajdz sposob aby X stalo sie Y nie tracac koncowej wartosci (tekst)
+dataset audio-tekst: Thomcles/YodaLingua-Polish
+albo nawet moze byc lepiej: 
+datadriven-company/WolneLektury-TTS-Polish
+
+Okej tylko wazny aspekt, zeby nie porownywac embeding z embeding i liczyc z tego loss, powinnismy sprawdzac czy tekst wygenerowany z bielika na naszym zamienionym embedingu jest zgodny z oczekiwanym. 
+
+
+1. Pierwszy krok to wziac dataset wyciagnac z niego 1000 probek, 
+2. zrobic funkcje ktora zamienia audio na embedding whispera
+3. funkcja adaptacji ktora jest MLP i stara sie zamienic whisper embedding na takie zrozumiale przez 
+3. zrobic funkcje ktora bierze embedding whispera juz po adaptacji  i 
+4. policzyc loss miedzy docelowym tekstem a to co zrozumial model
+
+Ale to tylko jako POC pod koniec inzynierki.
+
+
+12.08.2026
+Trzeba dodac scenariusze, nagrac glosowo kilka tur pod konkretne zadania i zrobic pytest z pomiarem czasu na ture etc.
+
+Dodalem mozliwosc dodawania scenariuszow do folderu test scenarios i tam folder mozna sobie stworzyc i dodac po kolei pliki audio wav, jezeli beda w zlej czestotliwosci to zrobi sie automatycznie resampling jezeli damy stereo to bedzie mono itp itd, najwazniejsze ze dziala jedyne jaki jest problem to dziwnie dziala ten speak(), ja wiem ze problem jest z GIL i blokowaniem kolejki, ten watek osobny dziala jakos nienaturalnie ale to do odplatania ewentualnie zmiany architektury zeby ten TTS na koncu i ASR na poczatku dzialaly jakos inaczej bardziej niezaleznie ale kolejkowo 

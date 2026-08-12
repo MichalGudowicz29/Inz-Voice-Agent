@@ -8,6 +8,9 @@ from faster_whisper import WhisperModel
 import json
 import time 
 from voice.tts import can_listen
+import wave
+import os
+import soxr
 
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
@@ -44,7 +47,7 @@ def listen(
     # tutaj dopiero przechwytujemy, input true bo chcemy nagrywac nie odtwarzac
     stream = audio.open(format=format, channels=channels, rate=rate, input=True, frames_per_buffer=chunk)
     # a tutaj sprawdzamy czy ktos mowi czy jest cisza, 3 to wartosc jak agresywnie sprawdzamy 3 to bardzo agresywny 0 to lagodny, agresywny oznacza ze jezeli nie jestem pewien to uznaje to jako cisze 
-    vad = webrtcvad.Vad(2)
+    vad = webrtcvad.Vad(3)
 
     buffer = []
     silence_counter = 0
@@ -146,6 +149,67 @@ def listen(
                         silence_counter = 0 
     except Exception as e:
         yield None, 0, f'{type(e).__name__}: {e}'
+
+
+
+
+def load_voice(path):
+    """ Loads single wav file and returns it as normalized float 32 """
+    with wave.open(path, 'rb') as f: 
+        #print(f"    channels: {f.getnchannels()} | (should be 1)")
+        #print(f"    rate: {f.getframerate()} | (should be 16kHz)")
+        #print(f"    width: {f.getsampwidth()} | (should be 2)")
+        pcm = f.readframes(f.getnframes())
+        sr = f.getframerate()
+        channels = f.getnchannels()
+
+    audio = np.frombuffer(pcm, dtype=np.int16).astype(np.float32) / 32768.0
+
+    # stereo -> mono
+    if channels == 2:
+        audio = audio.reshape(-1, 2).mean(axis=1)
+
+    # resampling tylko jeśli potrzeba
+    if sr != 16000:
+        audio = soxr.resample(audio, sr, 16000)
+
+    return audio.astype(np.float32)
+
+
+
+def load_scenario(
+    path,
+    transcribe_model: str = 'small',
+    device: str = 'cpu',
+    compute_type: str = 'int8'
+):
+    """ Goes through folder with wav files and load them into list, returns list of a float32 normlized audio data """
+    scenario = []
+    model = WhisperModel(transcribe_model, device=device, compute_type=compute_type)
+    print(f"Running '{path}' scenario")
+    for i, entry in enumerate(os.scandir(path)):
+         
+        if entry.name.endswith(".wav"):
+            print(f"  File {i}: {entry.path}") 
+            audio = load_voice(entry.path) 
+            start = time.perf_counter()
+            segments, info = model.transcribe(
+                audio,
+                beam_size=1,
+                language="pl"
+            )
+            delay = start - time.time()
+
+            text = "".join(s.text for s in segments).strip()
+            scenario.append({
+                "text": text,
+                "delay": delay,
+                "file": entry.name,
+            })
+    return scenario
+
+
+
 
 def light_listen():
     t0 = time.time()
