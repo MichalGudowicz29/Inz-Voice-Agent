@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 from prompts import assistant_prompt
 from pydantic import BaseModel, Field
 from typing import Literal
+from langchain.messages import SystemMessage
 from langchain_ollama import ChatOllama
 
 
