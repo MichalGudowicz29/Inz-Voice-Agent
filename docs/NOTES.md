@@ -237,3 +237,14 @@ zmniejszylem objetosc kodu tts i wielowatkowsci TTS dla klarownosci i prostoty
 Najwazniejszy jest sposob dzialania 
 
 stworzylem kolejke (poniewaz jest bezpieczna do uzywania w wielowaktowych systemach poniewaz ma wbudowany lock, ktory zapobiega dostepowi do pamieci wiecej niz jednemu watku na raz) do ktorej funkcja speak(), wywolywana wszedzie w kodzie tam gdzie jest potrzeba powiedzenia czegos, sama funkcja speak to wsadzenie do kolejki samo put() jest obciazeniem milisekundowym prze co nie blokujemy sobie programu ciezkim TTS, nastepnie worker powolany do zycia aby czytam na glos tekst wyciaga z tej kolejki FIFO elementy i czyta je na glos, nie blokujac grafu poniewaz dziala to w innym watku przez co odchodzimy troche od kaskadowosci a przechodzimy troche bardziej w strone jednoczesnej pracy grafu i czytania na glos, przez co samo czytanie odbywa sie "w tle", 
+
+
+Przenioslem program na komputer kola, teraz zamienic wywolanie chat gpt 4o mini na lokalny bielik i wersje bedzie mozna potraktowac jako baseline
+
+na poczatku zaczne mierzyc takie pomiary zeby moc porownywac baseline z innymi rozwiazaniami. 
+ASR latency
+LLM TTFT
+LLM total generation
+TTS generation
+TTS TTFA
+Jednak do tego potrzebuje aby LLM byl w opcji streaming a nie invoke ale to juz w ollamie ustawie 
