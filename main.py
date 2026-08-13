@@ -33,7 +33,7 @@ chat_config = {
 
 if test:
     print("Test mode")
-    scenario = load_scenario("test_scenarios/weather/")
+    scenario = load_scenario("test_scenarios/conversation/")
     i = 0
 
     while i < len(scenario):
