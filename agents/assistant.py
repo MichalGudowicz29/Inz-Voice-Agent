@@ -10,7 +10,7 @@ load_dotenv()
 LIGHT_MODEL = 'hf.co/SpeakLeash/Bielik-4.5B-v3.0-Instruct-GGUF:Q8_0'
 HEAVY_MODEL = 'SpeakLeash/bielik-11b-v3.0-instruct:Q4_K_M'
 
-class Agent(BaseModel):
+class AgentOutput(BaseModel):
     action: Literal[
         "chat",
         "planner",
