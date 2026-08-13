@@ -2,7 +2,8 @@ from dotenv import load_dotenv
 from prompts import assistant_prompt
 from pydantic import BaseModel, Field
 from typing import Literal
-from ollama import chat
+from langchain_ollama import ChatOllama
+
 
 
 load_dotenv()
@@ -10,7 +11,6 @@ load_dotenv()
 LIGHT_MODEL = 'hf.co/SpeakLeash/Bielik-4.5B-v3.0-Instruct-GGUF:Q8_0'
 HEAVY_MODEL = 'SpeakLeash/bielik-11b-v3.0-instruct:Q4_K_M'
 
-llm = None
 
 
 class AgentOutput(BaseModel):
@@ -25,12 +25,13 @@ class AgentOutput(BaseModel):
         description="Short spoken response for the user. Empty when another agent should handle the task."
     )
 
-def assistant_agent(messages):
 
-    response = chat(
-        model=LIGHT_MODEL,
-        messages=[{"role":"system","content":assistant_prompt},*messages],
-        format=AgentOutput.model_json_schema()
-    )
+llm = ChatOllama(model=LIGHT_MODEL).with_structured_output(AgentOutput) 
+
+def assistant_agent(messages):
+    response = llm.invoke([
+        SystemMessage(content=assistant_prompt),
+        *messages,
+    ])
 
     return response
